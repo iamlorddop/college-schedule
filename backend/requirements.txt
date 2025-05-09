@@ -1,0 +1,46 @@
+### Основные зависимости Django ###
+Django==4.2.7
+djangorestframework==3.14.0
+django-cors-headers==4.2.0
+python-dotenv==1.0.0
+
+### Аутентификация и авторизация ###
+djangorestframework-simplejwt==5.2.2
+PyJWT==2.7.0
+
+### Работа с базой данных ###
+psycopg2-binary==2.9.7
+django-environ==0.11.2
+
+### Асинхронные задачи ###
+celery==5.3.1
+redis==4.5.5
+pyrabbit==1.1.0
+
+### Генерация отчетов ###
+openpyxl==3.1.2
+reportlab==4.0.4
+python-docx==0.8.11
+
+### API документация ###
+drf-yasg==1.21.5
+coreapi==2.3.3
+
+### Оптимизация и кэширование ###
+django-redis==5.2.0
+hiredis==2.2.3
+
+### Тестирование и разработка ###
+pytest==7.4.0
+pytest-django==4.5.2
+pytest-cov==4.1.0
+factory-boy==3.2.1
+Faker==19.6.2
+
+### Безопасность ###
+django-axes==6.0.2
+bcrypt==4.0.1
+
+### Утилиты ###
+python-dateutil==2.8.2
+pytz==2023.3
