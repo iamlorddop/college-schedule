@@ -75,6 +75,20 @@ services:
     networks:
       - college_network
 
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - ./backend/staticfiles:/app/backend/staticfiles
+      - ./backend/media:/app/backend/media
+      - ./frontend/dist:/app/frontend/dist
+    depends_on:
+      - backend
+      - frontend
+
 volumes:
   postgres_data:
 
