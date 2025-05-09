@@ -49,15 +49,18 @@ services:
       - college_network
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    env_file:
+      build:
+        context: ./frontend
+        dockerfile: Dockerfile
+      env_file:
       - ./frontend/.env
-    ports:
-      - "5173:5173"
-    networks:
-      - college_network
+      ports:
+        - "5173:5173"
+      volumes:
+        - ./frontend:/app
+        - /app/node_modules
+      networks:
+        - college_network
 
   celery:
     build:
@@ -74,20 +77,6 @@ services:
       - rabbitmq
     networks:
       - college_network
-
-  nginx:
-    build:
-      context: .
-      dockerfile: nginx/Dockerfile
-    ports:
-      - "80:80"
-    volumes:
-      - ./backend/staticfiles:/app/backend/staticfiles
-      - ./backend/media:/app/backend/media
-      - ./frontend/dist:/app/frontend/dist
-    depends_on:
-      - backend
-      - frontend
 
 volumes:
   postgres_data:

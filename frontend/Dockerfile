@@ -1,42 +1,36 @@
-# Этап сборки
-FROM node:18-alpine as builder
+# Stage 1: Build
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# 1. Копируем только файлы зависимостей для лучшего кэширования
+# 1. Copy only dependency files first (лучшая практика для кэширования)
 COPY package.json package-lock.json ./
-# Устанавливаем зависимости (включая devDependencies)
+
+# 2. Install dependencies
 RUN npm ci
 
-# 2. Копируем остальные файлы проекта
+# 3. Copy all other files
 COPY . .
 
-# 3. Сборка проекта с production-режимом
+# 4. Build the app
 RUN npm run build
 
-# 4. Этап production
+# Stage 2: Production
 FROM nginx:1.23-alpine
 
-# Удаляем дефолтный конфиг nginx
-RUN rm /etc/nginx/conf.d/default.conf
+# 1. Remove default nginx config
+RUN rm -rf /etc/nginx/conf.d/default.conf
 
-# Копируем собранные файлы
+# 2. Copy built files from builder
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Копируем наш конфиг nginx
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# 3. Copy our nginx config
+COPY nginx.conf /etc/nginx/conf.d
 
-# Оптимизация для SPA (история маршрутизации)
-COPY nginx-spa.conf /etc/nginx/conf.d/nginx-spa.conf
-
-# Устанавливаем корректные права
+# 4. Set permissions
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
 	chmod -R 755 /usr/share/nginx/html
 
-# Здоровье-чек
-HEALTHCHECK --interval=30s --timeout=3s \
-	CMD curl -f http://localhost/ || exit 1
-
-EXPOSE 5173
+EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
