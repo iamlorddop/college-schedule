@@ -3,6 +3,9 @@ export interface User {
 	id: string;
 	username: string;
 	email: string;
+	last_name: string;
+	first_name: string;
+	middle_name: string;
 	role: 'admin' | 'teacher' | 'student';
 	token: string;
 	groupId?: string;       // Для студентов

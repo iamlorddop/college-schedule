@@ -15,6 +15,7 @@ import {
   MainLayout,
   AuthLayout,
   ProtectedRoute,
+  Profile,
 } from "../components";
 import { useAuth } from "../hooks";
 
@@ -36,6 +37,8 @@ export const AppRoutes: FC = () => {
   return (
     <MainLayout>
       <Routes>
+        <Route path="/profile" element={<Profile />} />
+
         {user.role === "admin" && (
           <>
             <Route
