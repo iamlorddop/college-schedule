@@ -120,10 +120,18 @@ graph TD
    ```
 
 5. **Создаем суперпользователя**:
+
    ```bash
    docker-compose exec backend python manage.py createsuperuser
    ```
-6. **Запуск фронтенда (для разработки)**:
+
+6. **Подключитесь к PostgreSQL в контейнере**:
+
+   ```bash
+   docker-compose exec db psql -U postgres -d college_schedule
+   ```
+
+7. **Запуск фронтенда (для разработки)**:
 
    ```bash
    cd frontend
@@ -131,7 +139,7 @@ graph TD
    npm run dev
    ```
 
-7. **Система доступна по адресам**:
+8. **Система доступна по адресам**:
 
 - Frontend: http://localhost:3000
 

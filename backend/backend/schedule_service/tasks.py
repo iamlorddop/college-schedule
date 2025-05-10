@@ -1,4 +1,4 @@
-from celery import shared_task
+from backend.backend.backend.celery import shared_task
 from .models import Schedule
 from data_service.models import TeachingLoad, TimeSlot, Classroom
 import random

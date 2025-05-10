@@ -11,6 +11,11 @@ services:
       - "5432:5432"
     networks:
       - college_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:6
@@ -18,6 +23,11 @@ services:
       - "6379:6379"
     networks:
       - college_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -26,14 +36,17 @@ services:
       - "15672:15672"
     networks:
       - college_network
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
   backend:
-    environment:
-        - DATABASE_URL=postgres://postgres:postgres@db:5432/college_schedule
-        - CELERY_BROKER_URL=amqp://rabbitmq
     build:
       context: ./backend
       dockerfile: Dockerfile
+    working_dir: /app/backend
     command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app
@@ -41,40 +54,53 @@ services:
       - "8000:8000"
     env_file:
       - ./backend/.env
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/college_schedule
+      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
     depends_on:
-      - db
-      - redis
-      - rabbitmq
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - college_network
 
   frontend:
-      build:
-        context: ./frontend
-        dockerfile: Dockerfile
-      env_file:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    env_file:
       - ./frontend/.env
-      ports:
-        - "5173:5173"
-      volumes:
-        - ./frontend:/app
-        - /app/node_modules
-      networks:
-        - college_network
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - college_network
 
   celery:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    working_dir: /app/backend
     command: celery -A backend worker -l INFO
     volumes:
       - ./backend:/app
     env_file:
       - ./backend/.env
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/college_schedule
+      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
     depends_on:
-      - backend
-      - redis
-      - rabbitmq
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - college_network
 
