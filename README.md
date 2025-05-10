@@ -121,7 +121,6 @@ graph TD
 
 5. **Создаем суперпользователя**:
    ```bash
-   docker-compose exec backend python manage.py migrate
    docker-compose exec backend python manage.py createsuperuser
    ```
 6. **Запуск фронтенда (для разработки)**:
