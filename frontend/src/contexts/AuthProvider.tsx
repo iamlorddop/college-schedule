@@ -12,6 +12,7 @@ import {
   login as apiLogin,
   register as apiRegister,
   logout as apiLogout,
+  updateProfile,
 } from "../api";
 import { type User, type AuthContextType, type AuthResponse } from "../types";
 
@@ -44,12 +45,35 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     setUser(null);
   }, []);
 
+  const updateUser = useCallback(
+    async (
+      updatedFields: Partial<
+        Omit<
+          User,
+          | "id"
+          | "token"
+          | "role"
+          | "groupId"
+          | "teacherId"
+          | "disciplinesCount"
+          | "groupsCount"
+        >
+      >
+    ) => {
+      if (!user) return;
+      const updatedUser = await updateProfile(updatedFields);
+      setUser(updatedUser);
+    },
+    [user]
+  );
+
   const contextValue: AuthContextType = {
     user,
     loading,
     login,
     register,
     logout,
+    updateUser,
   };
 
   return (

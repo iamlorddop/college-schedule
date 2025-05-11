@@ -15,6 +15,12 @@ class User(AbstractUser):
     )
     teacher_id = models.IntegerField(null=True, blank=True)
     group_id = models.IntegerField(null=True, blank=True)
+    middle_name = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True,
+        verbose_name=_('Middle name')
+    )
 
     class Meta:
         db_table = 'auth_user'
