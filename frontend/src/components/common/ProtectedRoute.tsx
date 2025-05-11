@@ -1,13 +1,7 @@
 import { type FC } from "react";
 import { Navigate } from "react-router-dom";
 
-import { type User } from "../../types";
-
-interface ProtectedRouteProps {
-  user: User | null;
-  children: React.ReactElement;
-  roles?: Array<"admin" | "teacher" | "student">;
-}
+import { type ProtectedRouteProps, type Role } from "../../types";
 
 export const ProtectedRoute: FC<ProtectedRouteProps> = ({
   user,
@@ -18,7 +12,7 @@ export const ProtectedRoute: FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" replace />;
   }
 
-  if (roles && !roles.includes(user.role)) {
+  if (roles.length < 1 && !roles.includes(user.role.toLowerCase() as Role)) {
     return <Navigate to="/" replace />;
   }
 

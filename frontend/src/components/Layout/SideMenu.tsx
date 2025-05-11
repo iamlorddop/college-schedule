@@ -21,21 +21,7 @@ export const SideMenu: FC = () => {
     {
       key: "data",
       icon: <SolutionOutlined />,
-      label: "Управление данными",
-      children: [
-        {
-          key: "groups",
-          label: <Link to="/data/groups">Группы</Link>,
-        },
-        {
-          key: "teachers",
-          label: <Link to="/data/teachers">Преподаватели</Link>,
-        },
-        {
-          key: "disciplines",
-          label: <Link to="/data/disciplines">Дисциплины</Link>,
-        },
-      ],
+      label: <Link to="/data">Управление данными</Link>,
     },
     {
       key: "schedule",
@@ -71,8 +57,8 @@ export const SideMenu: FC = () => {
   ];
 
   const getMenuItems = () => {
-    if (user?.role === "admin") return adminItems;
-    if (user?.role === "teacher") return teacherItems;
+    if (user?.role.toLowerCase() === "admin") return adminItems;
+    if (user?.role.toLowerCase() === "teacher") return teacherItems;
     return studentItems;
   };
 

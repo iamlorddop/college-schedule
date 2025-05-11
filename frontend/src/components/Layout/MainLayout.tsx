@@ -6,7 +6,7 @@ import { UserOutlined, LogoutOutlined } from "@ant-design/icons";
 import { SideMenu } from "./SideMenu";
 import { useAuth } from "../../hooks";
 
-const { Header, Content, Footer } = Layout;
+const { Header, Content, Footer, Sider } = Layout;
 
 export const MainLayout: FC<PropsWithChildren> = ({ children }) => {
   const { user, logout } = useAuth();
@@ -29,7 +29,14 @@ export const MainLayout: FC<PropsWithChildren> = ({ children }) => {
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <SideMenu />
+      <Sider
+        width={300}
+        style={{
+          background: "#001529",
+        }}
+      >
+        <SideMenu />
+      </Sider>
       <Layout>
         <Header
           style={{

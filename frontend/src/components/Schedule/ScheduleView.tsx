@@ -44,13 +44,13 @@ export const ScheduleView: FC = () => {
       setLoading(true);
       let response;
 
-      if (user?.role === "admin") {
+      if (user?.role.toLowerCase() === "admin") {
         response = await getSchedule({
           startDate: dateRange[0].format("YYYY-MM-DD"),
           endDate: dateRange[1].format("YYYY-MM-DD"),
           groupId: selectedGroup || undefined,
         });
-      } else if (user?.role === "teacher") {
+      } else if (user?.role.toLowerCase() === "teacher") {
         response = await getScheduleForTeacher(user.teacherId!, {
           startDate: dateRange[0].format("YYYY-MM-DD"),
           endDate: dateRange[1].format("YYYY-MM-DD"),
@@ -86,9 +86,9 @@ export const ScheduleView: FC = () => {
         endDate: dateRange[1].format("YYYY-MM-DD"),
       };
 
-      if (user.role === "admin" && selectedGroup) {
+      if (user.role.toLowerCase() === "admin" && selectedGroup) {
         params.groupId = selectedGroup;
-      } else if (user.role === "teacher") {
+      } else if (user.role.toLowerCase() === "teacher") {
         params.teacherId = user.teacherId;
       } else {
         params.groupId = user.groupId;
@@ -106,7 +106,7 @@ export const ScheduleView: FC = () => {
   }, [dateRange, selectedGroup]);
 
   useEffect(() => {
-    if (user?.role === "admin") {
+    if (user?.role.toLowerCase() === "admin") {
       getGroups().then((response) => {
         setGroups(response.data);
         if (response.data.length > 0) {

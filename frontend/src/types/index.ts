@@ -112,8 +112,10 @@ export interface AppRoutesProps {
   user: User | null;
 }
 
+export type Role = "admin" | "teacher" | "student";
+
 export interface ProtectedRouteProps {
   user: User | null;
   children: React.ReactNode;
-  roles?: Array<"admin" | "teacher" | "student">;
+  roles: Array<Role>;
 }
