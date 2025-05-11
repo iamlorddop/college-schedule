@@ -3,19 +3,15 @@ import { Link, useNavigate } from "react-router-dom";
 import { Form, Input, Button, Card, message } from "antd";
 import { UserOutlined, LockOutlined } from "@ant-design/icons";
 
+import { type AuthResponse } from "../../types";
 import { useAuth } from "../../hooks";
-
-interface LoginFormValues {
-  username: string;
-  password: string;
-}
 
 export const Login: FC = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const onFinish = async (values: LoginFormValues) => {
+  const onFinish = async (values: AuthResponse) => {
     try {
       setLoading(true);
       await login(values);

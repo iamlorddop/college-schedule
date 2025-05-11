@@ -88,10 +88,16 @@ export interface User {
 export type AuthContextType = {
 	user: User | null;
 	loading: boolean;
-	login: (credentials: { username: string; password: string; }) => Promise<User>;
-	register: (userData: { username: string; email: string; password: string; role: string; }) => Promise<User>;
+	login: (credentials: AuthResponse) => Promise<AuthResponse>;
+	register: (userData: AuthResponse) => Promise<AuthResponse>;
 	logout: () => void;
  };
+
+ export interface AuthResponse {
+	user: User;
+	access: string;  // JWT access token
+	refresh?: string;  // JWT refresh token (не всегда нужен)
+ }
  
  export interface AppRoutesProps {
 	user: User | null;

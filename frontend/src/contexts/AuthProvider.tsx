@@ -13,7 +13,7 @@ import {
   register as apiRegister,
   logout as apiLogout,
 } from "../api";
-import { type User, type AuthContextType } from "../types";
+import { type User, type AuthContextType, type AuthResponse } from "../types";
 
 export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -27,28 +27,17 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = useCallback(
-    async (credentials: { username: string; password: string }) => {
-      const userData = await apiLogin(credentials);
-      setUser(userData);
-      return userData;
-    },
-    []
-  );
+  const login = useCallback(async (credentials: AuthResponse) => {
+    const userData = await apiLogin(credentials);
+    setUser(userData.user);
+    return userData;
+  }, []);
 
-  const register = useCallback(
-    async (userData: {
-      username: string;
-      email: string;
-      password: string;
-      role: string;
-    }) => {
-      const newUser = await apiRegister(userData);
-      setUser(newUser);
-      return newUser;
-    },
-    []
-  );
+  const register = useCallback(async (userData: AuthResponse) => {
+    const newUser = await apiRegister(userData);
+    setUser(newUser.user);
+    return newUser;
+  }, []);
 
   const logout = useCallback(() => {
     apiLogout();

@@ -1,5 +1,0 @@
-from backend.backend.backend.celery import shared_task
-
-@shared_task
-def test_task():
-    return "Celery is working!"
