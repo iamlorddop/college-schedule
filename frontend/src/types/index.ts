@@ -62,12 +62,28 @@ export interface Discipline {
 
 export interface TeachingLoad {
   id: string;
-  discipline: Discipline;
-  group: Group;
+  discipline_id: string;
+  group_id: string;
+  teacher_id: string;
   teacher: Teacher;
-  semester1_hours?: number;
-  semester2_hours?: number;
-  // ... другие поля нагрузки
+  total_hours: number;
+  self_study_hours: number;
+  current_year_hours: number;
+  semester1_hours: number;
+  semester2_hours: number;
+  hours_to_issue: number;
+  course_design_hours: number;
+  semester1_exams: number;
+  semester2_exams: number;
+  course_work_check_hours: number;
+  consultations_hours: number;
+  dp_review_hours: number;
+  dp_guidance_hours: number;
+  total_teaching_hours: number;
+  master_training_hours: number;
+  advanced_level_hours: number;
+  notebook_check_10_percent: number;
+  notebook_check_15_percent: number;
 }
 
 export interface Classroom {

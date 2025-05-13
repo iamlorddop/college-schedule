@@ -8,6 +8,7 @@ import {
 
 import { useAuth, useApi } from "../../hooks";
 import { getScheduleForTeacher } from "../../api";
+import { WorkloadReport } from "../../components";
 
 export const TeacherDashboard: FC = () => {
   const { user } = useAuth();
@@ -52,6 +53,14 @@ export const TeacherDashboard: FC = () => {
           </Card>
         </Col>
       </Row>
+
+      {user?.teacherId && (
+        <Row style={{ marginTop: 24 }}>
+          <Col span={24}>
+            <WorkloadReport teacherId={user.teacherId} />
+          </Col>
+        </Row>
+      )}
     </div>
   );
 };

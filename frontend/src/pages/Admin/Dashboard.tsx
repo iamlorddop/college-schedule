@@ -8,6 +8,7 @@ import {
 } from "@ant-design/icons";
 
 import { useApi } from "../../hooks";
+import { WorkloadReport } from "../../components";
 import { getDisciplines, getSchedule, getTeachers, getGroups } from "../../api";
 
 export const AdminDashboard: FC = () => {
@@ -60,6 +61,12 @@ export const AdminDashboard: FC = () => {
               loading={scheduleLoading}
             />
           </Card>
+        </Col>
+      </Row>
+
+      <Row style={{ marginTop: 24 }}>
+        <Col span={24}>
+          <WorkloadReport />
         </Col>
       </Row>
     </div>
