@@ -81,12 +81,11 @@ export const SideMenu: FC = () => {
   const menuItemsWithPath = getMenuItems();
   const currentPath = location.pathname;
 
-  const selectedKey =
-    menuItemsWithPath.find(
-      (item) =>
-        currentPath === item.path ||
-        (item.path !== "/" && currentPath.startsWith(item.path))
-    )?.key || "dashboard";
+  const selectedKey = menuItemsWithPath.find(
+    (item) =>
+      currentPath === item.path ||
+      (item.path !== "/" && currentPath.startsWith(item.path))
+  )?.key;
 
   // Передаём только нужные поля в Menu
   const menuItems: MenuItem[] = menuItemsWithPath.map(
