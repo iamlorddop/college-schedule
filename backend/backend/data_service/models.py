@@ -6,12 +6,18 @@ class Specialty(models.Model):
 
     def __str__(self):
         return self.name
+    
+    class Meta:
+        db_table = 'specialties'
 
 class Course(models.Model):
     number = models.IntegerField()
 
     def __str__(self):
         return f"Курс {self.number}"
+    
+    class Meta:
+        db_table = 'courses'
 
 class StudentGroup(models.Model):
     STUDY_FORMS = [
@@ -28,6 +34,9 @@ class StudentGroup(models.Model):
 
     def __str__(self):
         return self.name
+    
+    class Meta:
+        db_table = 'student_groups'
 
 class Discipline(models.Model):
     name = models.CharField(max_length=255)
@@ -35,6 +44,9 @@ class Discipline(models.Model):
 
     def __str__(self):
         return self.name
+    
+    class Meta:
+        db_table = 'disciplines'
 
 class Teacher(models.Model):
     last_name = models.CharField(max_length=100)
@@ -47,6 +59,9 @@ class Teacher(models.Model):
 
     def __str__(self):
         return self.short_name
+
+    class Meta:
+        db_table = 'teachers'
 
 class TeachingLoad(models.Model):
     discipline = models.ForeignKey(Discipline, on_delete=models.CASCADE)
@@ -74,6 +89,9 @@ class TeachingLoad(models.Model):
 
     def __str__(self):
         return f"{self.discipline} - {self.group} - {self.teacher}"
+    
+    class Meta:
+        db_table = 'teaching_loads'
 
 class Classroom(models.Model):
     CLASSROOM_TYPES = [
@@ -89,6 +107,9 @@ class Classroom(models.Model):
     
     def __str__(self):
         return f"Аудитория {self.number}"
+    
+    class Meta:
+        db_table = 'classrooms'
 
 class TimeSlot(models.Model):
     DAYS_OF_WEEK = [
@@ -108,6 +129,9 @@ class TimeSlot(models.Model):
 
     def __str__(self):
         return f"{self.get_day_of_week_display()} {self.start_time}-{self.end_time}"
+    
+    class Meta:
+        db_table = 'time_slots'
 
 class Schedule(models.Model):
     WEEK_TYPES = [
@@ -129,3 +153,5 @@ class Schedule(models.Model):
     def __str__(self):
         return f"{self.teaching_load} - {self.time_slot} - {self.classroom}"
     
+    class Meta:
+        db_table = 'schedule'

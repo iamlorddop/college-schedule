@@ -1,4 +1,4 @@
-import { type FC, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 import { Table, Button, Space, Popconfirm, message, Input } from "antd";
 import {
   PlusOutlined,
@@ -18,6 +18,10 @@ export const TeachersManager: FC = () => {
   const [currentTeacher, setCurrentTeacher] = useState<Teacher | null>(null);
   const [searchText, setSearchText] = useState("");
 
+  useEffect(() => {
+    refresh({});
+  }, []);
+
   const handleDelete = async (id: string) => {
     try {
       await deleteTeacher(id);
@@ -33,7 +37,9 @@ export const TeachersManager: FC = () => {
     teachers?.filter(
       (teacher) =>
         teacher.last_name.toLowerCase().includes(searchText.toLowerCase()) ||
-        teacher.first_name.toLowerCase().includes(searchText.toLowerCase())
+        teacher.first_name.toLowerCase().includes(searchText.toLowerCase()) ||
+        (teacher.middle_name &&
+          teacher.middle_name.toLowerCase().includes(searchText.toLowerCase()))
     ) || [];
 
   const columns = [
