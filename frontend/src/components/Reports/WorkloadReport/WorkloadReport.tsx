@@ -121,9 +121,10 @@ export const WorkloadReport: FC<TeachersWorkloadReportProps> = ({
   if (error) {
     return <Alert message="Ошибка загрузки" type="error" />;
   }
-  // if (!chartData.length) {
-  //   return <Alert message="Нет данных" type="info" />;
-  // }
+
+  if (!chartData.length) {
+    return <Alert message="Нет данных" type="info" />;
+  }
 
   return (
     <Card title={`Нагрузка преподавателей${teacherId ? "" : " (все)"}`}>
