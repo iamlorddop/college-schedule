@@ -1,4 +1,4 @@
-import { type FC, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 import { Table, Button, Space, Popconfirm, message, Input } from "antd";
 import {
   PlusOutlined,
@@ -9,7 +9,7 @@ import {
 
 import { DisciplineForm } from "./DisciplineForm";
 import { type Discipline } from "../../../types";
-import { getDisciplines, deleteDiscipline } from "../../../api";
+import { getDisciplines, deleteDiscipline, getSpecialties } from "../../../api";
 import { useApi } from "../../../hooks";
 
 export const DisciplinesManager: FC = () => {
@@ -23,6 +23,26 @@ export const DisciplinesManager: FC = () => {
     null
   );
   const [searchText, setSearchText] = useState("");
+
+  // Справочник специальностей
+  const [specialties, setSpecialties] = useState<any[]>([]);
+
+  useEffect(() => {
+    refresh({});
+  }, []);
+
+  useEffect(() => {
+    const fetchSpecialties = async () => {
+      try {
+        const res = await getSpecialties();
+        setSpecialties(res.data);
+      } catch (error) {
+        message.error("Ошибка загрузки специальностей");
+        throw error;
+      }
+    };
+    fetchSpecialties();
+  }, []);
 
   const handleDelete = async (id: string) => {
     try {
@@ -49,10 +69,27 @@ export const DisciplinesManager: FC = () => {
     },
     {
       title: "Специальность",
-      dataIndex: ["specialty", "name"],
+      dataIndex: "specialty",
       key: "specialty",
-      sorter: (a: Discipline, b: Discipline) =>
-        a.specialty.name.localeCompare(b.specialty.name),
+      render: (specialty: number | { id: number; name: string }) => {
+        // Если specialty — это объект, используем его name
+        if (specialty && typeof specialty === "object" && "name" in specialty) {
+          return specialty.name;
+        }
+        // Если specialty — это id, ищем в справочнике
+        const spec = specialties.find((s) => s.id === specialty);
+        return spec ? spec.name : "—";
+      },
+      sorter: (a: Discipline, b: Discipline) => {
+        // Для сортировки ищем имена специальностей
+        const getName = (spec: any) => {
+          if (spec && typeof spec === "object" && "name" in spec)
+            return spec.name;
+          const found = specialties.find((s) => s.id === spec);
+          return found ? found.name : "";
+        };
+        return getName(a.specialty).localeCompare(getName(b.specialty));
+      },
     },
     {
       title: "Действия",

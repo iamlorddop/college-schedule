@@ -55,13 +55,20 @@ export const DisciplineForm: FC<DisciplineFormProps> = ({
     try {
       setLoading(true);
       const values = await form.validateFields();
+      // Преобразуем specialty_id -> specialty
+      const payload = {
+        name: values.name,
+        specialty: values.specialty_id,
+      };
 
       if (discipline) {
-        await updateDiscipline(discipline.id, values);
+        await updateDiscipline(discipline.id, payload);
         message.success("Дисциплина обновлена");
+        form.resetFields();
       } else {
-        await createDiscipline(values);
+        await createDiscipline(payload);
         message.success("Дисциплина создана");
+        form.resetFields();
       }
 
       onSuccess();
