@@ -28,6 +28,7 @@ export const GroupForm: FC<GroupFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [specialties, setSpecialties] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,6 +39,7 @@ export const GroupForm: FC<GroupFormProps> = ({
         ]);
         setSpecialties(specRes.data);
         setCourses(courseRes.data);
+        setDataLoaded(true);
       } catch (error) {
         message.error("Ошибка загрузки данных");
         throw error;
@@ -46,8 +48,9 @@ export const GroupForm: FC<GroupFormProps> = ({
     fetchData();
   }, []);
 
+  // Устанавливаем значения формы только после загрузки specialties и courses
   useEffect(() => {
-    if (group) {
+    if (group && dataLoaded) {
       form.setFieldsValue({
         name: group.name,
         specialty_id: group.specialty.id,
@@ -55,22 +58,35 @@ export const GroupForm: FC<GroupFormProps> = ({
         study_form: group.study_form,
         subgroup: group.subgroup,
       });
-    } else {
+    } else if (dataLoaded) {
       form.resetFields();
     }
-  }, [group, form]);
+  }, [group, form, dataLoaded]);
 
   const handleSubmit = async () => {
     try {
       setLoading(true);
       const values = await form.validateFields();
 
+      // Преобразуем значения формы к нужному виду для API
+      const payload: any = {
+        name: values.name,
+        specialty: values.specialty_id,
+        course: values.course_id,
+        study_form: values.study_form,
+      };
+      if (values.subgroup !== undefined) {
+        payload.subgroup = values.subgroup;
+      }
+
       if (group) {
-        await updateGroup(group.id, values);
+        await updateGroup(group.id, payload);
         message.success("Группа обновлена");
+        form.resetFields();
       } else {
-        await createGroup(values);
+        await createGroup(payload);
         message.success("Группа создана");
+        form.resetFields();
       }
 
       onSuccess();
@@ -104,10 +120,10 @@ export const GroupForm: FC<GroupFormProps> = ({
           label="Специальность"
           rules={[{ required: true, message: "Выберите специальность" }]}
         >
-          <Select placeholder="Выберите специальность">
+          <Select placeholder="Выберите специальность" loading={!dataLoaded}>
             {specialties.map((spec) => (
               <Option key={spec.id} value={spec.id}>
-                {spec.name}
+                {spec.code} - {spec.name}
               </Option>
             ))}
           </Select>
@@ -118,7 +134,7 @@ export const GroupForm: FC<GroupFormProps> = ({
           label="Курс"
           rules={[{ required: true, message: "Выберите курс" }]}
         >
-          <Select placeholder="Выберите курс">
+          <Select placeholder="Выберите курс" loading={!dataLoaded}>
             {courses.map((course) => (
               <Option key={course.id} value={course.id}>
                 {course.number} курс
