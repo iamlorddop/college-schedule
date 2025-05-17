@@ -1,4 +1,4 @@
-import { type FC } from "react";
+import { useEffect, type FC } from "react";
 import { Row, Col, Card, Statistic } from "antd";
 import {
   TeamOutlined,
@@ -12,11 +12,38 @@ import { WorkloadReport } from "../../components";
 import { getDisciplines, getSchedule, getTeachers, getGroups } from "../../api";
 
 export const AdminDashboard: FC = () => {
-  const { data: groups, loading: groupsLoading } = useApi(getGroups);
-  const { data: teachers, loading: teachersLoading } = useApi(getTeachers);
-  const { data: disciplines, loading: disciplinesLoading } =
-    useApi(getDisciplines);
-  const { data: schedule, loading: scheduleLoading } = useApi(getSchedule);
+  const {
+    data: groups,
+    loading: groupsLoading,
+    request: loadGroups,
+  } = useApi(getGroups);
+  const {
+    data: teachers,
+    loading: teachersLoading,
+    request: loadTeachers,
+  } = useApi(getTeachers);
+  const {
+    data: disciplines,
+    loading: disciplinesLoading,
+    request: loadDisciplines,
+  } = useApi(getDisciplines);
+  const {
+    data: schedule,
+    loading: scheduleLoading,
+    request: loadSchedule,
+  } = useApi(getSchedule);
+
+  useEffect(() => {
+    loadGroups({});
+    loadTeachers({});
+    loadDisciplines({});
+    loadSchedule({});
+  }, []);
+
+  // Уникальные дисциплины по названию
+  const uniqueDisciplineNames = Array.from(
+    new Set((disciplines || []).map((d) => d.name.trim()))
+  );
 
   return (
     <div>
@@ -26,7 +53,7 @@ export const AdminDashboard: FC = () => {
           <Card>
             <Statistic
               title="Групп"
-              value={groups?.length}
+              value={groups?.filter((g) => g.subgroup == null)?.length}
               prefix={<TeamOutlined />}
               loading={groupsLoading}
             />
@@ -46,7 +73,7 @@ export const AdminDashboard: FC = () => {
           <Card>
             <Statistic
               title="Дисциплин"
-              value={disciplines?.length}
+              value={uniqueDisciplineNames.length}
               prefix={<BookOutlined />}
               loading={disciplinesLoading}
             />
