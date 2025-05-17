@@ -64,13 +64,12 @@ export const DisciplineForm: FC<DisciplineFormProps> = ({
       if (discipline) {
         await updateDiscipline(discipline.id, payload);
         message.success("Дисциплина обновлена");
-        form.resetFields();
       } else {
         await createDiscipline(payload);
         message.success("Дисциплина создана");
-        form.resetFields();
       }
 
+      form.resetFields();
       onSuccess();
     } catch (error) {
       message.error("Ошибка при сохранении");

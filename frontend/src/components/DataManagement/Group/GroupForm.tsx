@@ -82,13 +82,12 @@ export const GroupForm: FC<GroupFormProps> = ({
       if (group) {
         await updateGroup(group.id, payload);
         message.success("Группа обновлена");
-        form.resetFields();
       } else {
         await createGroup(payload);
         message.success("Группа создана");
-        form.resetFields();
       }
 
+      form.resetFields();
       onSuccess();
     } catch (error) {
       message.error("Ошибка при сохранении");

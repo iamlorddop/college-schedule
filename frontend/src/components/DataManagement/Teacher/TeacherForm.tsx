@@ -40,13 +40,12 @@ export const TeacherForm: FC<TeacherFormProps> = ({
       if (teacher) {
         await updateTeacher(teacher.id, values);
         message.success("Преподаватель обновлен");
-        form.resetFields();
       } else {
         await createTeacher(values);
         message.success("Преподаватель создан");
-        form.resetFields();
       }
 
+      form.resetFields();
       onSuccess();
     } catch (error) {
       message.error("Ошибка при сохранении");
