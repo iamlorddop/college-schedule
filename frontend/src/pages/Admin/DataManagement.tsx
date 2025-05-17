@@ -5,6 +5,7 @@ import {
   GroupsManager,
   TeachersManager,
   DisciplinesManager,
+  SpecialtiesManager,
 } from "../../components";
 
 const { TabPane } = Tabs;
@@ -23,6 +24,9 @@ export const DataManagement: FC = () => {
         </TabPane>
         <TabPane tab="Дисциплины" key="disciplines">
           <DisciplinesManager />
+        </TabPane>
+        <TabPane tab="Специальности" key="specialties">
+          <SpecialtiesManager />
         </TabPane>
       </Tabs>
     </Card>
