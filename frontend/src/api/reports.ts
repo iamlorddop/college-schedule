@@ -6,16 +6,18 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const user = localStorage.getItem('user');
-  if (user) {
-    const parsedUser = JSON.parse(user);
-    if (parsedUser.token) {
-      config.headers.Authorization = `Bearer ${parsedUser.token}`;
-    }
+  const user = localStorage.getItem("user");
+  const token = localStorage.getItem("access_token");
+
+  if (user && token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-export const generateReport = (type: string, params: Record<string, any> = {}) => {
+export const generateReport = (
+  type: string,
+  params: Record<string, any> = {}
+) => {
   return api.get(`/${type}/`, { params });
 };

@@ -6,6 +6,7 @@ const API_URL = import.meta.env.VITE_API_URL + "/auth";
 
 axios.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -16,12 +17,6 @@ export const register = async (
   userData: AuthResponse
 ): Promise<AuthResponse> => {
   const response = await axios.post(`${API_URL}/register/`, userData);
-
-  if (response.data.access) {
-    localStorage.setItem("user", JSON.stringify(response.data.user));
-    localStorage.setItem("access_token", response.data.access);
-    localStorage.setItem("refresh_token", response.data.refresh || "");
-  }
 
   return response.data;
 };

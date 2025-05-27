@@ -1,5 +1,13 @@
 import { type FC, useEffect, useState } from "react";
-import { Table, Button, Space, Popconfirm, message, Input } from "antd";
+import {
+  Table,
+  Button,
+  Space,
+  Popconfirm,
+  message,
+  Input,
+  Typography,
+} from "antd";
 import {
   PlusOutlined,
   EditOutlined,
@@ -87,6 +95,16 @@ export const TeachersManager: FC = () => {
             <Button icon={<DeleteOutlined />} danger />
           </Popconfirm>
         </Space>
+      ),
+    },
+    {
+      title: "Логин",
+      dataIndex: "username",
+      key: "username",
+      render: (_: any, record: Teacher) => (
+        <Typography.Text copyable={!!record.user?.username}>
+          {record.user?.username || "-"}
+        </Typography.Text>
       ),
     },
   ];

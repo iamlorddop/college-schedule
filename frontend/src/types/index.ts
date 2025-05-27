@@ -1,13 +1,15 @@
+export type TRole = "admin" | "teacher" | "student";
+
 // Типы пользователей
 export interface User {
-  id: string;
+  id?: string;
   username: string;
   email: string;
   last_name: string;
   first_name: string;
   middle_name: string;
-  role: "admin" | "teacher" | "student";
-  token: string;
+  role: TRole;
+  token?: string;
   groupId?: string; // Для студентов
   teacherId?: string; // Для преподавателей
   disciplinesCount?: number; // Для преподавателей
@@ -25,6 +27,15 @@ export interface ScheduleItem {
   teacher: string;
   classroom: string;
   week_type?: "ч" | "з";
+}
+
+export interface ScheduleConflict {
+  time_slot: string;
+  classroom: string;
+  week_type: string | null;
+  date: string | null;
+  schedules: ScheduleItem[];
+  count: number;
 }
 
 export interface Group {
@@ -52,6 +63,11 @@ export interface Teacher {
   last_name: string;
   first_name: string;
   middle_name?: string;
+  user?: {
+    id: string;
+    username: string;
+    email: string;
+  };
 }
 
 export interface Discipline {
@@ -105,7 +121,7 @@ export type AuthContextType = {
   user: User | null;
   loading: boolean;
   login: (credentials: AuthResponse) => Promise<AuthResponse>;
-  register: (userData: AuthResponse) => Promise<AuthResponse>;
+  register: (userData: AuthResponse | User) => Promise<AuthResponse>;
   logout: () => void;
   /**
    * Обновляет данные пользователя (например, ФИО)

@@ -36,7 +36,6 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
 
   const register = useCallback(async (userData: AuthResponse) => {
     const newUser = await apiRegister(userData);
-    setUser(newUser.user);
     return newUser;
   }, []);
 

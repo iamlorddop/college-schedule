@@ -4,7 +4,7 @@ import { Form, Input, Button, Card, message, Select } from "antd";
 import { UserOutlined, MailOutlined, LockOutlined } from "@ant-design/icons";
 
 import { useAuth } from "../../hooks";
-import { type AuthResponse } from "../../types";
+import { type User } from "../../types";
 
 const { Option } = Select;
 
@@ -14,7 +14,7 @@ export const Register: FC = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
 
-  const onFinish = async (values: AuthResponse) => {
+  const onFinish = async (values: User) => {
     try {
       setLoading(true);
       await register(values);
