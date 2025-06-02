@@ -51,10 +51,7 @@ export const ScheduleView: FC = () => {
           groupId: selectedGroup || undefined,
         });
       } else if (user?.role.toLowerCase() === "teacher") {
-        response = await getScheduleForTeacher(user.teacherId!, {
-          startDate: dateRange[0].format("YYYY-MM-DD"),
-          endDate: dateRange[1].format("YYYY-MM-DD"),
-        });
+        response = await getScheduleForTeacher(user.teacherId!);
       } else if (user?.groupId) {
         response = await getScheduleForGroup(user.groupId!, {
           startDate: dateRange[0].format("YYYY-MM-DD"),
@@ -140,11 +137,15 @@ export const ScheduleView: FC = () => {
       dataIndex: "discipline",
       key: "discipline",
     },
-    {
-      title: "Преподаватель",
-      dataIndex: "teacher",
-      key: "teacher",
-    },
+    ...(user?.role.toLowerCase() !== "teacher"
+      ? [
+          {
+            title: "Преподаватель",
+            dataIndex: "teacher",
+            key: "teacher",
+          },
+        ]
+      : []),
     {
       title: "Аудитория",
       dataIndex: "classroom",
@@ -173,7 +174,7 @@ export const ScheduleView: FC = () => {
       }
       extra={
         <div style={{ display: "flex", gap: 16 }}>
-          {user?.role === "admin" && (
+          {user?.role.toLowerCase() === "admin" && (
             <Select<string>
               style={{ width: 200 }}
               value={selectedGroup}
