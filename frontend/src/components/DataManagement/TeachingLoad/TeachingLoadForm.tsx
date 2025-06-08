@@ -67,7 +67,7 @@ export const TeachingLoadForm: FC<TeachingLoadFormProps> = ({
       form.setFieldsValue({
         discipline_id: load.discipline_id,
         group_id: load.group_id,
-        teacher_id: load.teacher.id,
+        teacher_id: load.teacher,
         total_hours: load.total_hours,
         self_study_hours: load.self_study_hours,
         current_year_hours: load.current_year_hours,
