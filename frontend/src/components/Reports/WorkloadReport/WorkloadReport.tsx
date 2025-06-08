@@ -1,4 +1,4 @@
-import { type FC } from "react";
+import { useEffect, type FC } from "react";
 import {
   BarChart,
   Bar,
@@ -11,8 +11,7 @@ import {
 import { Card, Spin, Alert, Tabs } from "antd";
 
 import { useApi } from "../../../hooks";
-// import { getTeachingLoads } from "../../../api";
-import { getTeachingLoads } from "../../../api/mocks";
+import { getTeachingLoads, getTeachers } from "../../../api";
 import { type TeachingLoad, type Teacher } from "../../../types";
 import { formatTeacherName } from "../../../utils";
 
@@ -36,17 +35,52 @@ interface TeachersWorkloadReportProps {
 export const WorkloadReport: FC<TeachersWorkloadReportProps> = ({
   teacherId,
 }) => {
-  const { data, error, loading } = useApi(getTeachingLoads);
+  const {
+    data: teachingLoadsData,
+    error: teachingLoadsError,
+    loading: teachingLoadsLoading,
+    request: requestTeachingLoads,
+  } = useApi(getTeachingLoads);
 
-  const transformData = (loads: TeachingLoad[]): TeacherWorkload[] => {
+  const {
+    data: teachersData,
+    error: teachersError,
+    loading: teachersLoading,
+    request: requestTeachers,
+  } = useApi(getTeachers);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await Promise.all([requestTeachingLoads({}), requestTeachers({})]);
+      } catch (error) {
+        console.error("Failed to load data:", error);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const transformData = (
+    loads: TeachingLoad[],
+    teachers: Teacher[]
+  ): TeacherWorkload[] => {
+    const teacherMap = new Map<string, Teacher>();
+    teachers.forEach((teacher) => {
+      teacherMap.set(teacher.id, teacher);
+    });
+
     const workloadMap: Record<string, TeacherWorkload> = {};
 
     loads
-      .filter((load) => !teacherId || load.teacher.id === teacherId)
+      .filter((load) => !teacherId || load.teacher === teacherId)
       .forEach((load) => {
-        if (!workloadMap[load.teacher.id]) {
-          workloadMap[load.teacher.id] = {
-            teacher: load.teacher,
+        const teacher = teacherMap.get(load.teacher);
+        if (!teacher) return;
+
+        if (!workloadMap[load.teacher]) {
+          workloadMap[load.teacher] = {
+            teacher,
             semester1: 0,
             semester2: 0,
             exams: 0,
@@ -57,7 +91,7 @@ export const WorkloadReport: FC<TeachersWorkloadReportProps> = ({
           };
         }
 
-        const teacherWorkload = workloadMap[load.teacher.id];
+        const teacherWorkload = workloadMap[load.teacher];
         teacherWorkload.semester1 += load.semester1_hours || 0;
         teacherWorkload.semester2 += load.semester2_hours || 0;
         teacherWorkload.exams +=
@@ -78,16 +112,23 @@ export const WorkloadReport: FC<TeachersWorkloadReportProps> = ({
     return Object.values(workloadMap).sort((a, b) => b.total - a.total);
   };
 
-  const chartData = data ? transformData(data) : [];
+  const chartData =
+    teachingLoadsData && teachersData
+      ? transformData(teachingLoadsData, teachersData)
+      : [];
+
+  const loading = teachingLoadsLoading || teachersLoading;
+  const error = teachingLoadsError || teachersError;
 
   const renderChart = (dataKeys: string[]) => (
     <ResponsiveContainer width="100%" height={400}>
       <BarChart data={chartData}>
         <XAxis
-          dataKey="teacher.short_name"
+          dataKey="teacher"
           angle={-45}
           textAnchor="end"
           height={70}
+          tickFormatter={(teacher: Teacher) => formatTeacherName(teacher)}
         />
         <YAxis />
         <Tooltip
@@ -96,9 +137,7 @@ export const WorkloadReport: FC<TeachersWorkloadReportProps> = ({
             const teacher = chartData.find(
               (t) => formatTeacherName(t.teacher) === label
             )?.teacher;
-            return teacher
-              ? `${teacher.last_name} ${teacher.first_name}`
-              : label;
+            return teacher ?? label;
           }}
         />
         <Legend />
