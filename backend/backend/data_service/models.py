@@ -85,7 +85,6 @@ class TeachingLoad(models.Model):
     advanced_level_hours = models.IntegerField(blank=True, null=True)
     notebook_check_10_percent = models.IntegerField(blank=True, null=True)
     notebook_check_15_percent = models.IntegerField(blank=True, null=True)
-    schedules = models.ManyToManyField('Schedule', related_name='teaching_load_schedules')
 
     def __str__(self):
         return f"{self.discipline} - {self.group} - {self.teacher}"
@@ -103,7 +102,6 @@ class Classroom(models.Model):
     number = models.CharField(max_length=50)
     capacity = models.IntegerField(blank=True, null=True)
     type = models.CharField(max_length=20, choices=CLASSROOM_TYPES, default='lecture')
-    schedules = models.ManyToManyField('Schedule', related_name='classroom_schedules')
     
     def __str__(self):
         return f"Аудитория {self.number}"
@@ -125,33 +123,9 @@ class TimeSlot(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField()
     day_of_week = models.IntegerField(choices=DAYS_OF_WEEK)
-    schedules = models.ManyToManyField('Schedule', related_name='time_slot_schedules')
 
     def __str__(self):
         return f"{self.get_day_of_week_display()} {self.start_time}-{self.end_time}"
-    
+
     class Meta:
         db_table = 'time_slots'
-
-class Schedule(models.Model):
-    WEEK_TYPES = [
-        ('ч', 'Четная'),
-        ('з', 'Нечетная'),
-    ]
-    
-    teaching_load = models.ForeignKey(TeachingLoad, on_delete=models.CASCADE, related_name='schedule_teaching_load')
-    time_slot = models.ForeignKey(TimeSlot, on_delete=models.CASCADE, related_name='schedule_time_slot')
-    classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name='schedule_classroom')
-    week_type = models.CharField(max_length=1, choices=WEEK_TYPES, blank=True, null=True)
-    date = models.DateField(blank=True, null=True)
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['classroom', 'teaching_load', 'time_slot'], name='unique_schedule_booking')
-        ]
-
-    def __str__(self):
-        return f"{self.teaching_load} - {self.time_slot} - {self.classroom}"
-    
-    class Meta:
-        db_table = 'schedule'

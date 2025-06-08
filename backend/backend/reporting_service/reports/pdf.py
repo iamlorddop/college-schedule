@@ -1,7 +1,8 @@
+from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from django.http import HttpResponse
-from data_service.models import Schedule
+from schedule_service.models import Schedule
 
 def generate_schedule_pdf():
     response = HttpResponse(content_type='application/pdf')

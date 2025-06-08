@@ -20,15 +20,21 @@ export interface User {
 export interface ScheduleItem {
   id: string;
   date?: string;
-  day_of_week: string;
-  start_time: string;
-  end_time: string;
-  discipline: string;
-  teacher: string;
-  classroom: string;
   week_type?: "ч" | "з";
+  teaching_load: {
+    discipline: string;
+    teacher: string;
+    group: string;
+  };
+  time_slot: {
+    start_time: string;
+    end_time: string;
+    day_of_week: number;
+  };
+  classroom: {
+    number: string;
+  };
 }
-
 export interface ScheduleConflict {
   time_slot: string;
   classroom: string;
@@ -81,7 +87,7 @@ export interface TeachingLoad {
   discipline_id: string;
   group_id: string;
   teacher_id: string;
-  teacher: Teacher;
+  teacher: string;
   total_hours: number;
   self_study_hours: number;
   current_year_hours: number;

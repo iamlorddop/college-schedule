@@ -1,9 +1,10 @@
-import { type FC, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 import { Card, Button, Select, DatePicker, Spin, message } from "antd";
 import { SyncOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 
 import { getGroups, generateSchedule } from "../../api";
+import { ScheduleView } from "../../components";
 import { useApi } from "../../hooks";
 import { type Group } from "../../types";
 
@@ -18,8 +19,16 @@ export const ScheduleGenerator: FC = () => {
   ]);
   const [selectedGroups, setSelectedGroups] = useState<number[]>([]);
 
-  const { data: groups, loading: groupsLoading } = useApi(getGroups);
+  const {
+    data: groups,
+    loading: groupsLoading,
+    request: loadGroups,
+  } = useApi(getGroups);
   const { request: generate, loading: generating } = useApi(generateSchedule);
+
+  useEffect(() => {
+    loadGroups({});
+  }, []);
 
   const handleGenerate = async () => {
     try {
@@ -78,11 +87,13 @@ export const ScheduleGenerator: FC = () => {
         onChange={setSelectedGroups}
         loading={groupsLoading}
       >
-        {groups?.map((group: Group) => (
-          <Option key={group.id} value={group.id}>
-            {group.name}
-          </Option>
-        ))}
+        {groups
+          ?.filter((g) => g.subgroup == null)
+          ?.map((group: Group) => (
+            <Option key={group.id} value={group.id}>
+              {group.name}
+            </Option>
+          ))}
       </Select>
 
       {generating && (
@@ -90,6 +101,10 @@ export const ScheduleGenerator: FC = () => {
           <Spin tip="Генерация расписания..." size="large" />
         </div>
       )}
+
+      <div style={{ marginTop: 16 }}>
+        <ScheduleView />
+      </div>
     </Card>
   );
 };

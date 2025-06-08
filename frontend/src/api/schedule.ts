@@ -55,20 +55,18 @@ export const getScheduleForGroup = (
   groupId: string,
   params: Record<string, unknown> = {}
 ): Promise<AxiosResponse<ScheduleItem[]>> => {
-  return api.get(`/schedule/group/${groupId}/`, { params });
+  return api.get(`/schedules/group/${groupId}/`, { params });
 };
 
 /**
  * Получить расписание для преподавателя
  * @param teacherId ID преподавателя
- * @param params Дополнительные параметры
  * @returns Promise<ScheduleItem[]>
  */
 export const getScheduleForTeacher = (
-  teacherId: string,
-  params: Record<string, unknown> = {}
+  teacherId: string
 ): Promise<AxiosResponse<ScheduleItem[]>> => {
-  return api.get(`/schedule/teacher/${teacherId}/`, { params });
+  return api.get(`/schedules/teacher/${teacherId}/`);
 };
 
 /**

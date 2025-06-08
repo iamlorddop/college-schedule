@@ -1,7 +1,7 @@
 import openpyxl
 from io import BytesIO
 from django.http import HttpResponse
-from data_service.models import Schedule
+from schedule_service.models import Schedule
 
 def generate_schedule_xlsx():
     wb = openpyxl.Workbook()

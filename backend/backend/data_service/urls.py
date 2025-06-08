@@ -1,4 +1,3 @@
-
 from rest_framework import routers
 from django.urls import path, include
 from .views import (
@@ -10,7 +9,6 @@ from .views import (
     TeachingLoadViewSet,
     ClassroomViewSet,
     TimeSlotViewSet,
-    ScheduleViewSet,
 )
 
 router = routers.DefaultRouter()
@@ -22,7 +20,6 @@ router.register(r'teachers', TeacherViewSet, basename='teacher')
 router.register(r'teaching-loads', TeachingLoadViewSet, basename='teachingload')
 router.register(r'classrooms', ClassroomViewSet, basename='classroom')
 router.register(r'time-slots', TimeSlotViewSet, basename='timeslot')
-router.register(r'schedules', ScheduleViewSet, basename='schedule')
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -1,7 +1,8 @@
 
+from io import BytesIO
 from django.http import HttpResponse
 from docx import Document
-from data_service.models import Schedule
+from schedule_service.models import Schedule
 
 def generate_schedule_docx():
     document = Document()
