@@ -61,8 +61,6 @@ class UserProfileUpdateAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserListView(APIView):
-    permission_classes = [IsAdminUser]
-    
     def get(self, request):
         # Только админ может видеть список пользователей
         users = User.objects.all()

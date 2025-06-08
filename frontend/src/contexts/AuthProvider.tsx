@@ -34,10 +34,19 @@ export const AuthProvider: FC<PropsWithChildren> = ({ children }) => {
     return userData;
   }, []);
 
-  const register = useCallback(async (userData: AuthResponse) => {
-    const newUser = await apiRegister(userData);
-    return newUser;
-  }, []);
+  const register = useCallback(
+    async (userData: AuthResponse | User): Promise<AuthResponse> => {
+      try {
+        const response = await apiRegister(userData as AuthResponse);
+        setUser(response.user);
+        return response;
+      } catch (error) {
+        console.error("Registration failed:", error);
+        throw error;
+      }
+    },
+    []
+  );
 
   const logout = useCallback(() => {
     apiLogout();
