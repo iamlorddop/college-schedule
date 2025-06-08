@@ -9,6 +9,7 @@ import {
   type TeachingLoad,
   type Classroom,
   type TimeSlot,
+  type User,
 } from "../types";
 
 const api = axios.create({
@@ -25,6 +26,10 @@ api.interceptors.request.use((config) => {
 
   return config;
 });
+
+// Пользователи
+export const getUsers = (): Promise<AxiosResponse<User[]>> =>
+  api.get("/users/");
 
 // Специальности
 export const getSpecialties = (): Promise<AxiosResponse<Specialty[]>> =>
