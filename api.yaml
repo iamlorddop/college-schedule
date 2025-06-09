@@ -1,0 +1,846 @@
+openapi: 3.0.0
+info:
+  title: Экспресс расписание колледж API
+  version: 1.0.0
+  description: API для управления университетскими расписаниями, пользователями и связанными данными
+
+servers:
+  - url: http://api.example.com/v1
+    description: Production server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Specialty:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        code:
+          type: string
+      required: [name, code]
+
+    Course:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        specialty_id:
+          type: integer
+        year:
+          type: integer
+      required: [name, specialty_id, year]
+
+    Group:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        course_id:
+          type: integer
+        student_count:
+          type: integer
+      required: [name, course_id]
+
+    Discipline:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        hours:
+          type: integer
+        specialty_id:
+          type: integer
+      required: [name, hours, specialty_id]
+
+    Teacher:
+      type: object
+      properties:
+        id:
+          type: integer
+        first_name:
+          type: string
+        last_name:
+          type: string
+        middle_name:
+          type: string
+        position:
+          type: string
+        email:
+          type: string
+      required: [first_name, last_name, position]
+
+    TeachingLoad:
+      type: object
+      properties:
+        id:
+          type: integer
+        teacher_id:
+          type: integer
+        discipline_id:
+          type: integer
+        group_id:
+          type: integer
+        hours:
+          type: integer
+      required: [teacher_id, discipline_id, group_id, hours]
+
+    Classroom:
+      type: object
+      properties:
+        id:
+          type: integer
+        number:
+          type: string
+        capacity:
+          type: integer
+        type:
+          type: string
+      required: [number, capacity, type]
+
+    TimeSlot:
+      type: object
+      properties:
+        id:
+          type: integer
+        day_of_week:
+          type: integer
+        start_time:
+          type: string
+        end_time:
+          type: string
+      required: [day_of_week, start_time, end_time]
+
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: integer
+        group_id:
+          type: integer
+        teacher_id:
+          type: integer
+        discipline_id:
+          type: integer
+        classroom_id:
+          type: integer
+        time_slot_id:
+          type: integer
+        date:
+          type: string
+          format: date
+
+    Conflict:
+      type: object
+      properties:
+        type:
+          type: string
+        description:
+          type: string
+        items:
+          type: array
+          items:
+            type: object
+
+security:
+  - bearerAuth: []
+
+paths:
+  # Auth Module
+  /auth/register/:
+    post:
+      tags: [Auth]
+      summary: Регистрация нового пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+              required: [username, email, password]
+      responses:
+        '201':
+          description: User registered successfully
+
+  /auth/login/:
+    post:
+      tags: [Auth]
+      summary: Аутентификация пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required: [username, password]
+      responses:
+        '200':
+          description: Аутентификация прошла успешно
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+
+  /auth/profile/update/:
+    patch:
+      tags: [Auth]
+      summary: Обновить профиль пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                first_name:
+                  type: string
+                last_name:
+                  type: string
+      responses:
+        '200':
+          description: Профиль успешно обновлен
+
+  /auth/users/change-password/:
+    put:
+      tags: [Auth]
+      summary: Изменить пароль пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                old_password:
+                  type: string
+                new_password:
+                  type: string
+              required: [old_password, new_password]
+      responses:
+        '200':
+          description: Пароль успешно изменен
+
+  # Data Module - Users
+  /users/:
+    get:
+      tags: [Data - Users]
+      summary: Получить список пользователей
+      responses:
+        '200':
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    username:
+                      type: string
+                    email:
+                      type: string
+
+  # Data Module - Specialties
+  /specialties/:
+    get:
+      tags: [Data - Specialties]
+      summary: Получить список специальностей
+      responses:
+        '200':
+          description: Список специальностей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Specialty'
+    post:
+      tags: [Data - Specialties]
+      summary: Создать новую специальность
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Specialty'
+      responses:
+        '201':
+          description: Специальность успешно создана
+
+  /specialties/{id}/:
+    put:
+      tags: [Data - Specialties]
+      summary: Обновить специальность
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Specialty'
+      responses:
+        '200':
+          description: Специальность успешно обновлена
+    delete:
+      tags: [Data - Specialties]
+      summary: Удалить специальность
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Специальность успешно удалена
+
+  # Data Module - Courses
+  /courses/:
+    get:
+      tags: [Data - Courses]
+      summary: Получить список курсов
+      responses:
+        '200':
+          description: Список курсов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Course'
+    post:
+      tags: [Data - Courses]
+      summary: Создать новый курс
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Course'
+      responses:
+        '201':
+          description: Курс успешно создан
+
+  # Data Module - Groups
+  /groups/:
+    get:
+      tags: [Data - Groups]
+      summary: Получить список групп
+      responses:
+        '200':
+          description: Список групп
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Group'
+    post:
+      tags: [Data - Groups]
+      summary: Создать новую группу
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
+      responses:
+        '201':
+          description: Группа успешно создана
+
+  /groups/{id}/:
+    put:
+      tags: [Data - Groups]
+      summary: Обновить группу
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Group'
+      responses:
+        '200':
+          description: Группа успешно обновлена
+    delete:
+      tags: [Data - Groups]
+      summary: Удалить группу
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Группа успешно удалена
+
+  # Data Module - Disciplines
+  /disciplines/:
+    get:
+      tags: [Data - Disciplines]
+      summary: Получить список дисциплин
+      responses:
+        '200':
+          description: Список дисциплин
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Discipline'
+    post:
+      tags: [Data - Disciplines]
+      summary: Создать новую дисциплину
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Discipline'
+      responses:
+        '201':
+          description: Дисциплина создана успешно
+
+  /disciplines/{id}/:
+    put:
+      tags: [Data - Disciplines]
+      summary: Обновить дисциплину
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Discipline'
+      responses:
+        '200':
+          description: Дисциплина успешно обновлена
+    delete:
+      tags: [Data - Disciplines]
+      summary: Удалить дисциплину
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Дисциплина успешно удалена
+
+  # Data Module - Teachers
+  /teachers/:
+    get:
+      tags: [Data - Teachers]
+      summary: Получить список учителей
+      responses:
+        '200':
+          description: Список учителей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Teacher'
+    post:
+      tags: [Data - Teachers]
+      summary: Создать нового учителя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Teacher'
+      responses:
+        '201':
+          description: Учитель успешно создал
+
+  /teachers/{id}/:
+    patch:
+      tags: [Data - Teachers]
+      summary: Обновить преподавателя
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Teacher'
+      responses:
+        '200':
+          description: Учитель успешно обновлен
+    delete:
+      tags: [Data - Teachers]
+      summary: Удалить учителя
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Учитель успешно удален
+
+  # Data Module - Teaching Loads
+  /teaching-loads/:
+    get:
+      tags: [Data - Teaching Loads]
+      summary: Получить список учебных нагрузок
+      responses:
+        '200':
+          description: Список педагогической нагрузки
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeachingLoad'
+    post:
+      tags: [Data - Teaching Loads]
+      summary: Создать новую учебную нагрузку
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeachingLoad'
+      responses:
+        '201':
+          description: Преподавательская нагрузка создана успешно
+
+  /teaching-loads/{id}/:
+    patch:
+      tags: [Data - Teaching Loads]
+      summary: Обновить учебную нагрузку
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeachingLoad'
+      responses:
+        '200':
+          description: Преподавательская нагрузка успешно обновлена
+    delete:
+      tags: [Data - Teaching Loads]
+      summary: Удаление учебной нагрузки
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Преподавательская нагрузка успешно удалена
+
+  # Data Module - Classrooms
+  /classrooms/:
+    get:
+      tags: [Data - Classrooms]
+      summary: Получить список классов
+      responses:
+        '200':
+          description: Список классов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Classroom'
+    post:
+      tags: [Data - Classrooms]
+      summary: Создать новый класс
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Classroom'
+      responses:
+        '201':
+          description: Класс успешно создан
+
+  /classrooms/{id}/:
+    patch:
+      tags: [Data - Classrooms]
+      summary: Обновить класс
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Classroom'
+      responses:
+        '200':
+          description: Класс успешно обновлен
+    delete:
+      tags: [Data - Classrooms]
+      summary: Удалить класс
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Класс успешно удален
+
+  # Data Module - Time Slots
+  /time-slots/:
+    get:
+      tags: [Data - Time Slots]
+      summary: Получить список временных интервалов
+      responses:
+        '200':
+          description: Список временных интервалов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimeSlot'
+    post:
+      tags: [Data - Time Slots]
+      summary: Создать новый временной интервал
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeSlot'
+      responses:
+        '201':
+          description: Временной интервал успешно создан
+
+  /time-slots/{id}/:
+    patch:
+      tags: [Data - Time Slots]
+      summary: Обновить временной интервал
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeSlot'
+      responses:
+        '200':
+          description: Временной интервал успешно обновлен
+    delete:
+      tags: [Data - Time Slots]
+      summary: Удалить временной интервал
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Временной интервал успешно удален
+
+  # Reports Module
+  /reports/{type}/:
+    get:
+      tags: [Reports]
+      summary: Создать отчет
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [teachers, groups, classrooms, disciplines]
+      responses:
+        '200':
+          description: Отчет успешно создан
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # Schedule Module
+  /schedules/:
+    get:
+      tags: [Schedule]
+      summary: Получить расписания
+      responses:
+        '200':
+          description: Список расписаний
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+    post:
+      tags: [Schedule]
+      summary: Создать новое расписание
+      responses:
+        '201':
+          description: Расписание успешно создано
+
+  /schedules/generate/:
+    post:
+      tags: [Schedule]
+      summary: Создание расписаний
+      responses:
+        '201':
+          description: Расписания успешно созданы
+
+  /schedule/group/{groupId}/:
+    get:
+      tags: [Schedule]
+      summary: Получить расписание для группы
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Расписание группы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+
+  /schedule/teacher/{teacherId}/:
+    get:
+      tags: [Schedule]
+      summary: Получить расписание для учителя
+      parameters:
+        - name: teacherId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: График работы учителя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+
+  /schedules/conflicts/:
+    get:
+      tags: [Schedule]
+      summary: Получить конфликты расписаний
+      responses:
+        '200':
+          description: Список конфликтов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Conflict'
+
+  /schedules/{scheduleId}/:
+    delete:
+      tags: [Schedule]
+      summary: Удалить расписание
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Расписание успешно удалено
+
+  /schedules/check-data/:
+    post:
+      tags: [Schedule]
+      summary: Проверяйте данные перед генерацией
+      responses:
+        '200':
+          description: Результаты проверки данных
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  issues:
+                    type: array
+                    items:
+                      type: string
