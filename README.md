@@ -158,7 +158,7 @@ graph TD
 Полная документация API доступна после запуска:
 
 ```bash
-http://localhost:8000/api/docs/
+http://localhost:8080
 ```
 
 ### Ролевая модель
