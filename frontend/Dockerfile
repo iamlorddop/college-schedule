@@ -3,11 +3,11 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# 1. Copy only dependency files first (лучшая практика для кэширования)
-COPY package.json package-lock.json ./
+# # 1. Copy only dependency files first (лучшая практика для кэширования)
+COPY package.json package-lock.json* ./
 
 # 2. Install dependencies
-RUN npm ci
+RUN npm i
 
 # 3. Copy all other files
 COPY . .
