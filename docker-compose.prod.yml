@@ -4,15 +4,15 @@ services:
   db:
     image: postgres:13
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: $POSTGRES_DB
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - college_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U juliahdg"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,11 +25,11 @@ services:
 
   redis:
     image: redis:6-alpine
-    command: redis-server --requirepass ${REDIS_PASSWORD}
+    command: redis-server --requirepass Juliahdg_root!27
     networks:
       - college_network
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ["CMD", "redis-cli", "-a", "Juliahdg_root!27", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -45,8 +45,8 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_USER: $RABBITMQ_USER
+      RABBITMQ_DEFAULT_PASS: $RABBITMQ_PASSWORD
     networks:
       - college_network
     healthcheck:
@@ -72,13 +72,25 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-    env_file:
-      - .env
     environment:
-      POSTGRES_HOST: db
-      POSTGRES_PORT: 5432
-      CELERY_BROKER_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672//
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      # Django settings
+      DJANGO_SECRET_KEY: $DJANGO_SECRET_KEY
+      DJANGO_DEBUG: $DJANGO_DEBUG
+      DJANGO_ALLOWED_HOSTS: $DJANGO_ALLOWED_HOSTS
+      CSRF_TRUSTED_ORIGINS: $CSRF_TRUSTED_ORIGINS
+
+      # Database
+      POSTGRES_HOST: $POSTGRES_HOST
+      POSTGRES_PORT: $POSTGRES_PORT
+      POSTGRES_DB: $POSTGRES_DB
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+
+      # Celery/RabbitMQ
+      CELERY_BROKER_URL: $CELERY_BROKER_URL
+
+      # Redis
+      REDIS_URL: $REDIS_URL
     depends_on:
       db:
         condition: service_healthy
@@ -104,12 +116,23 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-    env_file:
-      - .env
     environment:
-      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/college_schedule
-      CELERY_BROKER_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD:-guest}@rabbitmq:5672//
-      REDIS_URL: redis://:${REDIS_PASSWORD:-redispass}@redis:6379/0
+      # Django settings
+      DJANGO_SECRET_KEY: $DJANGO_SECRET_KEY
+      DJANGO_DEBUG: $DJANGO_DEBUG
+
+      # Database
+      POSTGRES_HOST: $POSTGRES_HOST
+      POSTGRES_PORT: $POSTGRES_PORT
+      POSTGRES_DB: $POSTGRES_DB
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+
+      # Celery/RabbitMQ
+      CELERY_BROKER_URL: $CELERY_BROKER_URL
+
+      # Redis
+      REDIS_URL: $REDIS_URL
     depends_on:
       db:
         condition: service_healthy
@@ -135,12 +158,23 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-    env_file:
-      - .env
     environment:
-      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/college_schedule
-      CELERY_BROKER_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD:-guest}@rabbitmq:5672//
-      REDIS_URL: redis://:${REDIS_PASSWORD:-redispass}@redis:6379/0
+      # Django settings
+      DJANGO_SECRET_KEY: $DJANGO_SECRET_KEY
+      DJANGO_DEBUG: $DJANGO_DEBUG
+
+      # Database
+      POSTGRES_HOST: $POSTGRES_HOST
+      POSTGRES_PORT: $POSTGRES_PORT
+      POSTGRES_DB: $POSTGRES_DB
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+
+      # Celery/RabbitMQ
+      CELERY_BROKER_URL: $CELERY_BROKER_URL
+
+      # Redis
+      REDIS_URL: $REDIS_URL
     depends_on:
       db:
         condition: service_healthy
@@ -161,8 +195,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.prod
-    env_file:
-      - .env
+    environment:
+      VITE_API_URL: $VITE_API_URL
     networks:
       - college_network
     stop_grace_period: 10s
@@ -203,7 +237,9 @@ services:
       - certbot_etc:/etc/letsencrypt
       - certbot_var:/var/lib/letsencrypt
       - static_volume:/var/www/static
-    command: certonly --webroot --webroot-path=/var/www/static --email ${CERTBOT_EMAIL} --agree-tos --no-eff-email --force-renewal -d college-schedule.ru -d www.college-schedule.ru
+    environment:
+      CERTBOT_EMAIL: $CERTBOT_EMAIL
+    command: certonly --webroot --webroot-path=/var/www/static --email admin@college-schedule.ru --agree-tos --no-eff-email --force-renewal -d college-schedule.ru -d www.college-schedule.ru
     networks:
       - college_network
     restart: unless-stopped
