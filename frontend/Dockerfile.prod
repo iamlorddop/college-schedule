@@ -1,5 +1,5 @@
 # Stage 1: Builder
-FROM node:18-alpine AS builder
+FROM node:17-alpine AS builder
 
 WORKDIR /app
 
@@ -16,7 +16,7 @@ RUN if [ ! -f package-lock.json ]; then npm install; else npm ci; fi
 COPY . .
 
 # 5. Build the app
-RUN npm run build
+RUN npm install --verbose && npm run build --verbose
 
 # Stage 2: Production
 FROM nginx:1.23-alpine
