@@ -9,7 +9,7 @@ RUN npm install
 
 COPY . ./
 
-RUN npm run build
+RUN npm run build 2>&1 | tee /app/build.log || (echo "Build failed" && exit 1)
 
 # Stage 2: Production
 FROM nginx:1.23-alpine
