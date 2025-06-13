@@ -68,7 +68,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile.prod
     working_dir: /app
-    command: gunicorn --bind 0.0.0.0:8000 --workers 4 --threads 2 --timeout 120 backend.backend.backend.wsgi:application
+    command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
