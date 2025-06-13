@@ -100,6 +100,7 @@ services:
         condition: service_healthy
     networks:
       - college_network
+    network_mode: host
     stop_grace_period: 10s
     restart: unless-stopped
     deploy:
@@ -199,6 +200,7 @@ services:
       VITE_API_URL: $VITE_API_URL
     networks:
       - college_network
+    network_mode: host
     stop_grace_period: 10s
     restart: unless-stopped
     volumes:
