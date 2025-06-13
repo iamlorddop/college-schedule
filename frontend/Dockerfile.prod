@@ -3,20 +3,13 @@ FROM node:17-alpine AS builder
 
 WORKDIR /app
 
-# 1. Copy only dependency files first
-COPY package.json ./
+COPY package.json package-lock.json ./
 
-# 2. Copy lock file if it exists (не будет ошибкой, если файла нет)
-COPY package-lock.json* ./
+RUN npm install
 
-# 3. Install dependencies (генерируем lock-файл если его нет)
-RUN if [ ! -f package-lock.json ]; then npm install; else npm ci; fi
+COPY . ./
 
-# 4. Copy all other files
-COPY . .
-
-# 5. Build the app
-RUN npm install --verbose && npm run build --verbose
+RUN npm run build
 
 # Stage 2: Production
 FROM nginx:1.23-alpine
