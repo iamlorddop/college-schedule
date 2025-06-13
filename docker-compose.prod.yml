@@ -203,6 +203,10 @@ services:
     restart: unless-stopped
     volumes:
       - static_volume:/app/static
+    deploy:
+      resources:
+        limits:
+          memory: 2G
 
   nginx:
     image: nginx:1.23-alpine
