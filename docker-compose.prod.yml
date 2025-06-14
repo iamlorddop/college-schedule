@@ -68,12 +68,12 @@ services:
       context: ./backend
       dockerfile: Dockerfile.prod
     working_dir: /app/backend
-    command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8080"
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     ports:
-      - "8000:8000"
+      - "8080:8080"
     environment:
       # Django settings
       DJANGO_SECRET_KEY: $DJANGO_SECRET_KEY
@@ -206,7 +206,7 @@ services:
     volumes:
       - static_volume:/app/static
     ports:
-      - "80:80"
+      - "5173:5173"
     deploy:
       resources:
         limits:
