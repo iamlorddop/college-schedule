@@ -77,8 +77,6 @@ services:
       # Redis
       REDIS_URL: $REDIS_URL
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
       rabbitmq:
@@ -119,8 +117,6 @@ services:
       # Redis
       REDIS_URL: $REDIS_URL
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
       rabbitmq:
@@ -161,8 +157,6 @@ services:
       # Redis
       REDIS_URL: $REDIS_URL
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
       rabbitmq:
