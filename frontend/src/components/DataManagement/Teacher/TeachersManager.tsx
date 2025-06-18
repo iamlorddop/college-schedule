@@ -7,7 +7,10 @@ import {
   message,
   Input,
   Typography,
+  Grid,
+  Card,
 } from "antd";
+import type { ColumnType, ColumnGroupType } from "antd/es/table";
 import {
   PlusOutlined,
   EditOutlined,
@@ -20,11 +23,14 @@ import { type Teacher } from "../../../types";
 import { deleteTeacher, getTeachers } from "../../../api";
 import { useApi } from "../../../hooks";
 
+const { useBreakpoint } = Grid;
+
 export const TeachersManager: FC = () => {
   const { data: teachers, loading, request: refresh } = useApi(getTeachers);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentTeacher, setCurrentTeacher] = useState<Teacher | null>(null);
   const [searchText, setSearchText] = useState("");
+  const screens = useBreakpoint();
 
   useEffect(() => {
     refresh({});
@@ -50,7 +56,7 @@ export const TeachersManager: FC = () => {
           teacher.middle_name.toLowerCase().includes(searchText.toLowerCase()))
     ) || [];
 
-  const columns = [
+  const baseColumns: (ColumnGroupType<Teacher> | ColumnType<Teacher>)[] = [
     {
       title: "Фамилия",
       dataIndex: "last_name",
@@ -67,6 +73,7 @@ export const TeachersManager: FC = () => {
       title: "Отчество",
       dataIndex: "middle_name",
       key: "middle_name",
+      responsive: ["md"],
     },
     {
       title: "Краткое имя",
@@ -75,6 +82,17 @@ export const TeachersManager: FC = () => {
         `${record.last_name} ${record.first_name[0]}.${
           record.middle_name ? record.middle_name[0] + "." : ""
         }`,
+      responsive: ["sm"],
+    },
+    {
+      title: "Логин",
+      key: "username",
+      render: (_: any, record: Teacher) => (
+        <Typography.Text copyable={!!record.user?.username}>
+          {record.user?.username || "-"}
+        </Typography.Text>
+      ),
+      responsive: ["lg"],
     },
     {
       title: "Действия",
@@ -87,61 +105,117 @@ export const TeachersManager: FC = () => {
               setCurrentTeacher(record);
               setModalOpen(true);
             }}
+            size={screens.xs ? "small" : "middle"}
           />
           <Popconfirm
             title="Удалить преподавателя?"
             onConfirm={() => handleDelete(record.id)}
           >
-            <Button icon={<DeleteOutlined />} danger />
+            <Button
+              icon={<DeleteOutlined />}
+              danger
+              size={screens.xs ? "small" : "middle"}
+            />
           </Popconfirm>
         </Space>
       ),
     },
+  ];
+
+  const mobileColumns: (ColumnGroupType<Teacher> | ColumnType<Teacher>)[] = [
     {
-      title: "Логин",
-      dataIndex: "username",
-      key: "username",
+      title: "Преподаватель",
+      key: "name",
       render: (_: any, record: Teacher) => (
-        <Typography.Text copyable={!!record.user?.username}>
-          {record.user?.username || "-"}
-        </Typography.Text>
+        <div>
+          <div>
+            {record.last_name} {record.first_name} {record.middle_name}
+          </div>
+          <div style={{ fontSize: 12, color: "#888" }}>
+            {record.user?.username && (
+              <>
+                Логин:{" "}
+                <Typography.Text copyable>
+                  {record.user.username}
+                </Typography.Text>
+              </>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Действия",
+      key: "actions",
+      render: (_: any, record: Teacher) => (
+        <Space>
+          <Button
+            icon={<EditOutlined />}
+            onClick={() => {
+              setCurrentTeacher(record);
+              setModalOpen(true);
+            }}
+            size="small"
+          />
+          <Popconfirm
+            title="Удалить преподавателя?"
+            onConfirm={() => handleDelete(record.id)}
+          >
+            <Button icon={<DeleteOutlined />} danger size="small" />
+          </Popconfirm>
+        </Space>
       ),
     },
   ];
 
+  const columns = screens.xs ? mobileColumns : baseColumns;
+
   return (
-    <div>
-      <div
-        style={{
-          marginBottom: 16,
-          display: "flex",
-          justifyContent: "space-between",
-        }}
+    <div style={{ padding: screens.xs ? 8 : 16 }}>
+      <Card
+        bordered={false}
+        style={{ marginBottom: 16 }}
+        bodyStyle={{ padding: screens.xs ? 8 : 16 }}
       >
-        <Input
-          placeholder="Поиск преподавателей"
-          prefix={<SearchOutlined />}
-          style={{ width: 300 }}
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => {
-            setCurrentTeacher(null);
-            setModalOpen(true);
+        <div
+          style={{
+            display: "flex",
+            flexDirection: screens.xs ? "column" : "row",
+            gap: screens.xs ? 12 : 16,
+            justifyContent: "space-between",
           }}
         >
-          Добавить преподавателя
-        </Button>
-      </div>
+          <Input
+            placeholder="Поиск преподавателей"
+            prefix={<SearchOutlined />}
+            style={{ width: screens.xs ? "100%" : 300 }}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            size={screens.xs ? "small" : "middle"}
+          />
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              setCurrentTeacher(null);
+              setModalOpen(true);
+            }}
+            size={screens.xs ? "small" : "middle"}
+            block={screens.xs}
+          >
+            {screens.xs ? "Добавить" : "Добавить преподавателя"}
+          </Button>
+        </div>
+      </Card>
 
       <Table
         columns={columns}
         dataSource={filteredTeachers}
         rowKey="id"
         loading={loading}
+        size={screens.xs ? "small" : "middle"}
+        scroll={screens.xs ? { x: true } : undefined}
+        bordered
       />
 
       <TeacherForm

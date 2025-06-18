@@ -1,5 +1,14 @@
-import { useEffect, useState, type FC } from "react";
-import { Table, Button, Space, Popconfirm, message, Select } from "antd";
+import { useEffect, useState, type FC, useMemo } from "react";
+import {
+  Table,
+  Button,
+  Space,
+  Popconfirm,
+  message,
+  Select,
+  Flex,
+  Grid,
+} from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 
 import { ClassroomForm } from "./ClassroomForm";
@@ -8,6 +17,13 @@ import { getClassrooms, deleteClassroom } from "../../../api";
 import { useApi } from "../../../hooks";
 
 const { Option } = Select;
+const { useBreakpoint } = Grid;
+
+const classroomTypes = {
+  lecture: "Лекционная",
+  lab: "Лаборатория",
+  practice: "Практическая",
+} as const;
 
 export const ClassroomsManager: FC = () => {
   const { data: classrooms, loading, request: refresh } = useApi(getClassrooms);
@@ -15,16 +31,20 @@ export const ClassroomsManager: FC = () => {
   const [currentClassroom, setCurrentClassroom] = useState<Classroom | null>(
     null
   );
-  const [searchType, setSearchType] = useState<string | undefined>();
+  const [searchType, setSearchType] = useState<string>();
+  const screens = useBreakpoint();
 
   useEffect(() => {
     refresh({});
   }, []);
 
-  const filteredClassrooms =
-    classrooms?.filter(
-      (classroom: Classroom) => !searchType || classroom.type === searchType
-    ) || [];
+  const filteredClassrooms = useMemo(() => {
+    return (
+      classrooms?.filter(
+        (classroom: Classroom) => !searchType || classroom.type === searchType
+      ) || []
+    );
+  }, [classrooms, searchType]);
 
   const handleDelete = async (id: string) => {
     try {
@@ -33,7 +53,7 @@ export const ClassroomsManager: FC = () => {
       refresh({});
     } catch (error) {
       message.error("Ошибка при удалении аудитории");
-      throw error;
+      console.error(error);
     }
   };
 
@@ -47,14 +67,8 @@ export const ClassroomsManager: FC = () => {
       title: "Тип",
       dataIndex: "type",
       key: "type",
-      render: (type: string) => {
-        const types: Record<string, string> = {
-          lecture: "Лекционная",
-          lab: "Лаборатория",
-          practice: "Практическая",
-        };
-        return types[type] || type;
-      },
+      render: (type: keyof typeof classroomTypes) =>
+        classroomTypes[type] || type,
     },
     {
       title: "Вместимость",
@@ -65,20 +79,24 @@ export const ClassroomsManager: FC = () => {
     {
       title: "Действия",
       key: "actions",
+      width: 120,
       render: (_: any, record: Classroom) => (
-        <Space>
+        <Space size="small">
           <Button
             icon={<EditOutlined />}
             onClick={() => {
               setCurrentClassroom(record);
               setModalOpen(true);
             }}
+            aria-label="Редактировать"
           />
           <Popconfirm
             title="Удалить аудиторию?"
             onConfirm={() => handleDelete(record.id)}
+            okText="Удалить"
+            cancelText="Отмена"
           >
-            <Button icon={<DeleteOutlined />} danger />
+            <Button icon={<DeleteOutlined />} danger aria-label="Удалить" />
           </Popconfirm>
         </Space>
       ),
@@ -87,12 +105,12 @@ export const ClassroomsManager: FC = () => {
 
   return (
     <div>
-      <div
-        style={{
-          marginBottom: 16,
-          display: "flex",
-          justifyContent: "space-between",
-        }}
+      <Flex
+        justify="space-between"
+        align="center"
+        gap={16}
+        style={{ marginBottom: 16 }}
+        wrap="wrap"
       >
         <Button
           type="primary"
@@ -101,8 +119,9 @@ export const ClassroomsManager: FC = () => {
             setCurrentClassroom(null);
             setModalOpen(true);
           }}
+          style={{ marginBottom: !screens.sm ? 8 : 0 }}
         >
-          Добавить аудиторию
+          {screens.sm ? "Добавить аудиторию" : "Добавить"}
         </Button>
 
         <Select
@@ -110,19 +129,28 @@ export const ClassroomsManager: FC = () => {
           value={searchType}
           onChange={setSearchType}
           allowClear
-          style={{ width: 200 }}
+          style={{ width: screens.xs ? "100%" : 200 }}
+          aria-label="Тип аудитории"
         >
-          <Option value="lecture">Лекционная</Option>
-          <Option value="lab">Лаборатория</Option>
-          <Option value="practice">Практическая</Option>
+          {Object.entries(classroomTypes).map(([value, label]) => (
+            <Option key={value} value={value}>
+              {label}
+            </Option>
+          ))}
         </Select>
-      </div>
+      </Flex>
 
       <Table
         columns={columns}
         dataSource={filteredClassrooms}
         rowKey="id"
         loading={loading}
+        scroll={{ x: true }}
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+          responsive: true,
+        }}
       />
 
       <ClassroomForm

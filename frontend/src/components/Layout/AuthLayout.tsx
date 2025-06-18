@@ -1,8 +1,9 @@
 import { type FC, type PropsWithChildren } from "react";
-import { Layout, Space } from "antd";
+import { Layout, Space, Typography } from "antd";
 import { Link } from "react-router-dom";
 
 const { Header, Content, Footer } = Layout;
+const { Title } = Typography;
 
 export const AuthLayout: FC<PropsWithChildren> = ({ children }) => {
   return (
@@ -10,7 +11,16 @@ export const AuthLayout: FC<PropsWithChildren> = ({ children }) => {
       <Header style={{ background: "#fff", textAlign: "center" }}>
         <Space>
           <Link to="/">
-            <h1 style={{ color: "#1890ff", margin: 0 }}>Экспресс-расписание</h1>
+            <Title
+              level={1}
+              style={{
+                color: "#1890ff",
+                margin: 0,
+                fontSize: "clamp(18px, 4vw, 24px)", // Адаптивный размер шрифта
+              }}
+            >
+              Экспресс-расписание
+            </Title>
           </Link>
         </Space>
       </Header>

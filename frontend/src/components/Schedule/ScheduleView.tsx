@@ -11,11 +11,17 @@ import {
   Tag,
   Space,
   Pagination,
+  Grid,
+  Typography,
+  Dropdown,
+  Menu,
+  Flex,
 } from "antd";
 import {
   CalendarOutlined,
   DownloadOutlined,
   SearchOutlined,
+  MoreOutlined,
 } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
@@ -42,16 +48,11 @@ import {
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
+const { useBreakpoint } = Grid;
+const { Text } = Typography;
 
 const groupByDayOfWeek = (schedule: ScheduleItem[]) => {
-  const days = [
-    "Понедельник",
-    "Вторник",
-    "Среда",
-    "Четверг",
-    "Пятница",
-    "Суббота",
-  ];
+  const days = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
   const result: Record<number, ScheduleItem[]> = {
     0: [],
     1: [],
@@ -64,12 +65,10 @@ const groupByDayOfWeek = (schedule: ScheduleItem[]) => {
   schedule.forEach((item) => {
     const day = item.time_slot?.day_of_week ?? 0;
     if (day >= 1 && day <= 6) {
-      // 1-6 = Пн-Сб
       result[day - 1].push(item);
     }
   });
 
-  // Сортируем занятия по времени в каждом дне
   Object.values(result).forEach((daySchedule) => {
     daySchedule.sort((a, b) => {
       const aTime = a.time_slot?.start_time || "";
@@ -82,6 +81,7 @@ const groupByDayOfWeek = (schedule: ScheduleItem[]) => {
 };
 
 export const ScheduleView: FC = () => {
+  const screens = useBreakpoint();
   const { user } = useAuth();
   const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -186,6 +186,7 @@ export const ScheduleView: FC = () => {
       console.error("Export error:", err);
     }
   };
+
   const getGroupNameMemoized = useCallback(
     (id: string): string => {
       const group = groups.find((g) => g.id === id);
@@ -233,7 +234,6 @@ export const ScheduleView: FC = () => {
     }
   }, [user?.role]);
 
-  // Функция для подсветки совпадений
   const highlightSearchTerm = (text: string) => {
     if (!searchTerm || !text) return text;
 
@@ -304,13 +304,60 @@ export const ScheduleView: FC = () => {
     getTeacherNameMemoized,
   ]);
 
-  // Группировка с учетом подсветки
   const { days, scheduleByDay } = useMemo(
     () => groupByDayOfWeek(filteredSchedule),
     [filteredSchedule]
   );
 
-  const columns = [
+  const mobileColumns = [
+    {
+      title: "День/Время",
+      dataIndex: "dayTime",
+      key: "dayTime",
+      render: (text: string) => (
+        <div>
+          <Text strong>{text.split(" ")[0]}</Text>
+          <br />
+          <Text type="secondary">{text.split(" ")[1]}</Text>
+        </div>
+      ),
+    },
+    {
+      title: "Занятие",
+      dataIndex: "lesson",
+      key: "lesson",
+      render: (item: ScheduleItem) => {
+        if (!item) return null;
+
+        const disciplineName = getDisciplineNameMemoized(
+          item.teaching_load.discipline
+        );
+        const groupName = getGroupNameMemoized(item.teaching_load.group);
+        const teacherName = getTeacherNameMemoized(item.teaching_load.teacher);
+        const classroomNumber = item.classroom?.number || "-";
+        const date = item.date ? dayjs(item.date).format("DD.MM.YYYY") : "";
+
+        return (
+          <div>
+            <Text strong>{highlightSearchTerm(disciplineName)}</Text>
+            <br />
+            <Text>Группа: {highlightSearchTerm(groupName)}</Text>
+            <br />
+            <Text>Преподаватель: {highlightSearchTerm(teacherName)}</Text>
+            <br />
+            <Text>Аудитория: {highlightSearchTerm(classroomNumber)}</Text>
+            <br />
+            <Tag color={item.week_type === "ч" ? "blue" : "orange"}>
+              {item.week_type === "ч" ? "Четная" : "Нечетная"}
+            </Tag>
+            {date && ` (${highlightSearchTerm(date)})`}
+          </div>
+        );
+      },
+    },
+  ];
+
+  const desktopColumns = [
     {
       title: "Время",
       dataIndex: "time",
@@ -378,6 +425,23 @@ export const ScheduleView: FC = () => {
       a.localeCompare(b)
     );
 
+    if (screens.xs) {
+      const mobileData: any[] = [];
+      days.forEach((day, dayIndex) => {
+        const daySchedule = scheduleByDay[dayIndex];
+        daySchedule.forEach((item) => {
+          if (item.time_slot) {
+            mobileData.push({
+              key: `${day}-${item.time_slot.start_time}`,
+              dayTime: `${day} ${item.time_slot.start_time}-${item.time_slot.end_time}`,
+              lesson: item,
+            });
+          }
+        });
+      });
+      return mobileData;
+    }
+
     return sortedTimeSlots.map((time) => {
       const row: Record<string, any> = { time, key: time };
 
@@ -391,42 +455,67 @@ export const ScheduleView: FC = () => {
 
       return row;
     });
-  }, [scheduleByDay, days]);
+  }, [scheduleByDay, days, screens.xs]);
 
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * pageSize;
     return tableData.slice(start, start + pageSize);
   }, [tableData, currentPage]);
 
+  const exportMenu = (
+    <Menu
+      items={[
+        {
+          key: "pdf",
+          label: "Экспорт в PDF",
+          icon: <DownloadOutlined />,
+          onClick: () => exportReport("pdf"),
+        },
+        {
+          key: "xlsx",
+          label: "Экспорт в Excel",
+          icon: <DownloadOutlined />,
+          onClick: () => exportReport("xlsx"),
+        },
+      ]}
+    />
+  );
+
   return (
     <Card
       title={
-        <div style={{ display: "flex", alignItems: "center" }}>
+        <Flex align="center">
           <CalendarOutlined style={{ marginRight: 8 }} />
-          <span>Расписание</span>
-        </div>
+          <Text>Расписание</Text>
+        </Flex>
       }
     >
-      <div style={{ display: "flex", gap: 16, marginBottom: 16 }}>
+      <Flex
+        vertical={screens.xs}
+        gap={16}
+        style={{ marginBottom: 16 }}
+        wrap="wrap"
+      >
         <Input
-          placeholder="Поиск по дисциплине, группе, преподавателю..."
+          placeholder="Поиск..."
           value={searchTerm}
           onChange={(e) => handleSearch(e.target.value)}
-          style={{ width: 300 }}
+          style={{ width: screens.xs ? "100%" : 300 }}
           prefix={<SearchOutlined />}
           allowClear
         />
+
         {user?.role.toLowerCase() === "admin" && (
           <Select<string>
-            style={{ width: 200 }}
+            style={{ width: screens.xs ? "100%" : 200 }}
             value={selectedGroup}
             onChange={handleGroupChange}
-            placeholder="Выберите группу"
+            placeholder="Группа"
           >
             {groups.map((group) => (
               <Option key={group.id} value={group.id}>
                 {group.name}
-                {group.subgroup ? ` (подгруппа ${group.subgroup})` : ""}
+                {group.subgroup ? ` (${group.subgroup})` : ""}
               </Option>
             ))}
           </Select>
@@ -444,25 +533,32 @@ export const ScheduleView: FC = () => {
               setDateRange([dayjs().startOf("week"), dayjs().endOf("week")]);
             }
           }}
-          style={{ width: 250 }}
-          defaultValue={[dayjs().startOf("week"), dayjs().endOf("week")]}
+          style={{ width: screens.xs ? "100%" : 250 }}
+          size={screens.xs ? "small" : "middle"}
         />
 
-        <Space.Compact>
-          <Button
-            icon={<DownloadOutlined />}
-            onClick={() => exportReport("pdf")}
-          >
-            PDF
-          </Button>
-          <Button
-            icon={<DownloadOutlined />}
-            onClick={() => exportReport("xlsx")}
-          >
-            Excel
-          </Button>
-        </Space.Compact>
-      </div>
+        {screens.xs ? (
+          <Dropdown overlay={exportMenu} placement="bottomRight">
+            <Button icon={<MoreOutlined />}>Действия</Button>
+          </Dropdown>
+        ) : (
+          <Space.Compact>
+            <Button
+              icon={<DownloadOutlined />}
+              onClick={() => exportReport("pdf")}
+            >
+              PDF
+            </Button>
+            <Button
+              icon={<DownloadOutlined />}
+              onClick={() => exportReport("xlsx")}
+            >
+              Excel
+            </Button>
+          </Space.Compact>
+        )}
+      </Flex>
+
       {error && (
         <Alert
           message={error}
@@ -479,16 +575,34 @@ export const ScheduleView: FC = () => {
           style={{ marginBottom: 16 }}
         />
       )}
+
       <Spin spinning={loading}>
-        <Table
-          columns={columns}
-          dataSource={paginatedData}
-          rowKey="time"
-          pagination={false}
-          bordered
-          scroll={{ x: "max-content" }}
-          style={{ marginBottom: 16 }}
-        />
+        {screens.xs ? (
+          <div style={{ overflowX: "auto" }}>
+            <Table
+              columns={mobileColumns}
+              dataSource={paginatedData}
+              rowKey="key"
+              pagination={false}
+              bordered
+              size="small"
+              style={{ marginBottom: 16 }}
+            />
+          </div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <Table
+              columns={desktopColumns}
+              dataSource={paginatedData}
+              rowKey="time"
+              pagination={false}
+              bordered
+              scroll={{ x: "max-content" }}
+              style={{ marginBottom: 16 }}
+            />
+          </div>
+        )}
+
         <div style={{ display: "flex", justifyContent: "center" }}>
           <Pagination
             current={currentPage}
@@ -496,6 +610,7 @@ export const ScheduleView: FC = () => {
             pageSize={pageSize}
             onChange={setCurrentPage}
             showSizeChanger={false}
+            size={screens.xs ? "small" : "default"}
           />
         </div>
       </Spin>

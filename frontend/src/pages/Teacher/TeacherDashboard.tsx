@@ -21,7 +21,6 @@ export const TeacherDashboard: FC = () => {
     if (user?.teacherId) {
       return getScheduleForTeacher(user.teacherId);
     }
-
     return Promise.reject(new Error("Teacher ID is undefined"));
   });
 
@@ -32,8 +31,8 @@ export const TeacherDashboard: FC = () => {
   return (
     <div>
       <h2>Панель преподавателя</h2>
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={8}>
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} md={8}>
           <Card>
             <Statistic
               title="Дисциплин"
@@ -42,7 +41,7 @@ export const TeacherDashboard: FC = () => {
             />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col xs={24} sm={12} md={8}>
           <Card>
             <Statistic
               title="Групп"
@@ -51,7 +50,7 @@ export const TeacherDashboard: FC = () => {
             />
           </Card>
         </Col>
-        <Col span={8}>
+        <Col xs={24} sm={24} md={8}>
           <Card>
             <Statistic
               title="Занятий на неделю"

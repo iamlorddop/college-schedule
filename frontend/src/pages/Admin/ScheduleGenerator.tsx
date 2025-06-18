@@ -1,5 +1,15 @@
 import { type FC, useEffect, useState } from "react";
-import { Card, Button, Select, DatePicker, Spin, message } from "antd";
+import {
+  Card,
+  Button,
+  Select,
+  DatePicker,
+  Spin,
+  message,
+  Flex,
+  Grid,
+  Typography,
+} from "antd";
 import { SyncOutlined } from "@ant-design/icons";
 import dayjs, { Dayjs } from "dayjs";
 
@@ -10,8 +20,11 @@ import { type Group } from "../../types";
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
+const { useBreakpoint } = Grid;
+const { Title } = Typography;
 
 export const ScheduleGenerator: FC = () => {
+  const screens = useBreakpoint();
   const [semester, setSemester] = useState<number>(1);
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null]>([
     dayjs().startOf("month"),
@@ -46,60 +59,91 @@ export const ScheduleGenerator: FC = () => {
       message.success("Расписание успешно сгенерировано");
     } catch (error) {
       message.error("Ошибка при генерации расписания");
-      throw error;
+      console.error(error);
     }
   };
 
   return (
-    <Card
-      title="Генерация расписания"
-      extra={
-        <Button
-          type="primary"
-          icon={<SyncOutlined />}
-          loading={generating}
-          onClick={handleGenerate}
+    <Card>
+      {screens.xs ? (
+        <Flex vertical gap={16}>
+          <Title level={4} style={{ margin: 0 }}>
+            Генерация расписания
+          </Title>
+          <Button
+            type="primary"
+            icon={<SyncOutlined />}
+            loading={generating}
+            onClick={handleGenerate}
+            size="small"
+            block
+          >
+            Сгенерировать
+          </Button>
+        </Flex>
+      ) : (
+        <Flex justify="space-between" align="center">
+          <Title level={4} style={{ margin: 0 }}>
+            Генерация расписания
+          </Title>
+          <Button
+            type="primary"
+            icon={<SyncOutlined />}
+            loading={generating}
+            onClick={handleGenerate}
+          >
+            Сгенерировать
+          </Button>
+        </Flex>
+      )}
+
+      <Flex vertical gap={16} style={{ marginTop: 24, marginBottom: 24 }}>
+        <Flex gap={16} wrap="wrap">
+          <Select
+            style={{ width: screens.xs ? "100%" : 200 }}
+            value={semester}
+            onChange={setSemester}
+            size={screens.xs ? "small" : "middle"}
+          >
+            <Option value={1}>1 семестр</Option>
+            <Option value={2}>2 семестр</Option>
+          </Select>
+
+          <RangePicker
+            value={dateRange}
+            onChange={(dates) =>
+              setDateRange(dates as [Dayjs | null, Dayjs | null])
+            }
+            style={{ width: screens.xs ? "100%" : 350 }}
+            size={screens.xs ? "small" : "middle"}
+          />
+        </Flex>
+
+        <Select
+          mode="multiple"
+          style={{ width: "100%" }}
+          placeholder="Выберите группы"
+          value={selectedGroups}
+          onChange={setSelectedGroups}
+          loading={groupsLoading}
+          size={screens.xs ? "small" : "middle"}
+          maxTagCount={screens.xs ? 1 : undefined}
+          maxTagTextLength={screens.xs ? 10 : undefined}
         >
-          Сгенерировать
-        </Button>
-      }
-    >
-      <div style={{ display: "flex", gap: 16, marginBottom: 24 }}>
-        <Select style={{ width: 200 }} value={semester} onChange={setSemester}>
-          <Option value={1}>1 семестр</Option>
-          <Option value={2}>2 семестр</Option>
+          {groups
+            ?.filter((g) => g.subgroup == null)
+            ?.map((group: Group) => (
+              <Option key={group.id} value={group.id}>
+                {group.name}
+              </Option>
+            ))}
         </Select>
-
-        <RangePicker
-          value={dateRange}
-          onChange={(dates) =>
-            setDateRange(dates as [Dayjs | null, Dayjs | null])
-          }
-          style={{ width: 350 }}
-        />
-      </div>
-
-      <Select
-        mode="multiple"
-        style={{ width: "100%" }}
-        placeholder="Выберите группы"
-        value={selectedGroups}
-        onChange={setSelectedGroups}
-        loading={groupsLoading}
-      >
-        {groups
-          ?.filter((g) => g.subgroup == null)
-          ?.map((group: Group) => (
-            <Option key={group.id} value={group.id}>
-              {group.name}
-            </Option>
-          ))}
-      </Select>
+      </Flex>
 
       {generating && (
-        <div style={{ textAlign: "center", marginTop: 24 }}>
+        <Flex justify="center" style={{ marginTop: 24 }}>
           <Spin tip="Генерация расписания..." size="large" />
-        </div>
+        </Flex>
       )}
 
       <div style={{ marginTop: 16 }}>

@@ -1,5 +1,17 @@
 import { type FC, useEffect, useState } from "react";
-import { Table, Button, Space, Popconfirm, message, Input } from "antd";
+import {
+  Table,
+  Button,
+  Space,
+  Popconfirm,
+  message,
+  Input,
+  Grid,
+  Card,
+  Typography,
+  Tag,
+} from "antd";
+import type { ColumnType } from "antd/es/table";
 import {
   PlusOutlined,
   EditOutlined,
@@ -8,9 +20,11 @@ import {
 } from "@ant-design/icons";
 
 import { DisciplineForm } from "./DisciplineForm";
-import { type Discipline } from "../../../types";
+import { type Discipline, type Specialty } from "../../../types"; // Make sure to import Specialty type
 import { getDisciplines, deleteDiscipline, getSpecialties } from "../../../api";
 import { useApi } from "../../../hooks";
+
+const { useBreakpoint } = Grid;
 
 export const DisciplinesManager: FC = () => {
   const {
@@ -23,22 +37,18 @@ export const DisciplinesManager: FC = () => {
     null
   );
   const [searchText, setSearchText] = useState("");
-
-  // Справочник специальностей
-  const [specialties, setSpecialties] = useState<any[]>([]);
+  const [specialties, setSpecialties] = useState<Specialty[]>([]); // Properly typed specialties
+  const screens = useBreakpoint();
 
   useEffect(() => {
     refresh({});
-  }, []);
-
-  useEffect(() => {
     const fetchSpecialties = async () => {
       try {
         const res = await getSpecialties();
         setSpecialties(res.data);
       } catch (error) {
         message.error("Ошибка загрузки специальностей");
-        throw error;
+        console.error(error);
       }
     };
     fetchSpecialties();
@@ -51,7 +61,7 @@ export const DisciplinesManager: FC = () => {
       refresh({});
     } catch (error) {
       message.error("Ошибка при удалении дисциплины");
-      throw error;
+      console.error(error);
     }
   };
 
@@ -60,7 +70,29 @@ export const DisciplinesManager: FC = () => {
       discipline.name.toLowerCase().includes(searchText.toLowerCase())
     ) || [];
 
-  const columns = [
+  const renderSpecialty = (specialty: string | Specialty) => {
+    if (
+      typeof specialty === "object" &&
+      "id" in specialty &&
+      "name" in specialty
+    ) {
+      return <Tag color="blue">{specialty.name}</Tag>;
+    }
+
+    // Handle case where specialty is just an ID (string)
+    const spec = specialties.find((s) => s.id === specialty);
+    return spec ? <Tag color="blue">{spec.name}</Tag> : "—";
+  };
+
+  const getSpecialtyName = (specialty: string | Specialty): string => {
+    if (typeof specialty === "object" && "name" in specialty) {
+      return specialty.name;
+    }
+    const spec = specialties.find((s) => s.id === specialty);
+    return spec ? spec.name : "";
+  };
+
+  const baseColumns: ColumnType<Discipline>[] = [
     {
       title: "Название",
       dataIndex: "name",
@@ -71,25 +103,13 @@ export const DisciplinesManager: FC = () => {
       title: "Специальность",
       dataIndex: "specialty",
       key: "specialty",
-      render: (specialty: number | { id: number; name: string }) => {
-        // Если specialty — это объект, используем его name
-        if (specialty && typeof specialty === "object" && "name" in specialty) {
-          return specialty.name;
-        }
-        // Если specialty — это id, ищем в справочнике
-        const spec = specialties.find((s) => s.id === specialty);
-        return spec ? spec.name : "—";
-      },
+      render: renderSpecialty,
       sorter: (a: Discipline, b: Discipline) => {
-        // Для сортировки ищем имена специальностей
-        const getName = (spec: any) => {
-          if (spec && typeof spec === "object" && "name" in spec)
-            return spec.name;
-          const found = specialties.find((s) => s.id === spec);
-          return found ? found.name : "";
-        };
-        return getName(a.specialty).localeCompare(getName(b.specialty));
+        return getSpecialtyName(a.specialty).localeCompare(
+          getSpecialtyName(b.specialty)
+        );
       },
+      responsive: ["md"],
     },
     {
       title: "Действия",
@@ -102,51 +122,110 @@ export const DisciplinesManager: FC = () => {
               setCurrentDiscipline(record);
               setModalOpen(true);
             }}
+            size={screens.xs ? "small" : "middle"}
           />
           <Popconfirm
             title="Удалить дисциплину?"
             onConfirm={() => handleDelete(record.id)}
+            placement={screens.xs ? "top" : "left"}
           >
-            <Button icon={<DeleteOutlined />} danger />
+            <Button
+              icon={<DeleteOutlined />}
+              danger
+              size={screens.xs ? "small" : "middle"}
+            />
           </Popconfirm>
         </Space>
       ),
     },
   ];
 
+  const mobileColumns: ColumnType<Discipline>[] = [
+    {
+      title: "Дисциплина",
+      key: "name",
+      render: (_: any, record: Discipline) => (
+        <div>
+          <Typography.Text strong>{record.name}</Typography.Text>
+          <div style={{ marginTop: 4 }}>
+            {renderSpecialty(record.specialty)}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Действия",
+      key: "actions",
+      render: (_: any, record: Discipline) => (
+        <Space>
+          <Button
+            icon={<EditOutlined />}
+            onClick={() => {
+              setCurrentDiscipline(record);
+              setModalOpen(true);
+            }}
+            size="small"
+          />
+          <Popconfirm
+            title="Удалить дисциплину?"
+            onConfirm={() => handleDelete(record.id)}
+            placement="top"
+          >
+            <Button icon={<DeleteOutlined />} danger size="small" />
+          </Popconfirm>
+        </Space>
+      ),
+    },
+  ];
+
+  const columns = screens.xs ? mobileColumns : baseColumns;
+
   return (
-    <div>
-      <div
-        style={{
-          marginBottom: 16,
-          display: "flex",
-          justifyContent: "space-between",
-        }}
+    <div style={{ padding: screens.xs ? 8 : 16 }}>
+      <Card
+        bordered={false}
+        style={{ marginBottom: 16 }}
+        bodyStyle={{ padding: screens.xs ? 8 : 16 }}
       >
-        <Input
-          placeholder="Поиск дисциплин"
-          prefix={<SearchOutlined />}
-          style={{ width: 300 }}
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => {
-            setCurrentDiscipline(null);
-            setModalOpen(true);
+        <div
+          style={{
+            display: "flex",
+            flexDirection: screens.xs ? "column" : "row",
+            gap: screens.xs ? 12 : 16,
+            justifyContent: "space-between",
           }}
         >
-          Добавить дисциплину
-        </Button>
-      </div>
+          <Input
+            placeholder="Поиск дисциплин"
+            prefix={<SearchOutlined />}
+            style={{ width: screens.xs ? "100%" : 300 }}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            size={screens.xs ? "small" : "middle"}
+          />
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              setCurrentDiscipline(null);
+              setModalOpen(true);
+            }}
+            size={screens.xs ? "small" : "middle"}
+            block={screens.xs}
+          >
+            {screens.xs ? "Добавить" : "Добавить дисциплину"}
+          </Button>
+        </div>
+      </Card>
 
       <Table
         columns={columns}
         dataSource={filteredDisciplines}
         rowKey="id"
         loading={loading}
+        size={screens.xs ? "small" : "middle"}
+        scroll={screens.xs ? { x: true } : undefined}
+        bordered
       />
 
       <DisciplineForm

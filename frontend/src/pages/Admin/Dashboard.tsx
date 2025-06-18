@@ -1,5 +1,5 @@
 import { useEffect, type FC } from "react";
-import { Row, Col, Card, Statistic } from "antd";
+import { Row, Col, Card, Statistic, Typography, Grid } from "antd";
 import {
   TeamOutlined,
   BookOutlined,
@@ -11,7 +11,11 @@ import { useApi } from "../../hooks";
 import { WorkloadReport } from "../../components";
 import { getDisciplines, getSchedule, getTeachers, getGroups } from "../../api";
 
+const { Title } = Typography;
+const { useBreakpoint } = Grid;
+
 export const AdminDashboard: FC = () => {
+  const screens = useBreakpoint();
   const {
     data: groups,
     loading: groupsLoading,
@@ -46,10 +50,13 @@ export const AdminDashboard: FC = () => {
   );
 
   return (
-    <div>
-      <h2>Панель администратора</h2>
-      <Row gutter={16} style={{ marginBottom: 24 }}>
-        <Col span={6}>
+    <div style={{ padding: screens.xs ? "8px" : "16px" }}>
+      <Title level={2} style={{ marginBottom: "24px" }}>
+        Панель администратора
+      </Title>
+
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} md={12} lg={8} xl={6}>
           <Card>
             <Statistic
               title="Групп"
@@ -59,7 +66,7 @@ export const AdminDashboard: FC = () => {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={12} lg={8} xl={6}>
           <Card>
             <Statistic
               title="Преподавателей"
@@ -69,7 +76,7 @@ export const AdminDashboard: FC = () => {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={12} lg={8} xl={6}>
           <Card>
             <Statistic
               title="Дисциплин"
@@ -79,7 +86,7 @@ export const AdminDashboard: FC = () => {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} md={12} lg={8} xl={6}>
           <Card>
             <Statistic
               title="Занятий в расписании"
@@ -91,7 +98,7 @@ export const AdminDashboard: FC = () => {
         </Col>
       </Row>
 
-      <Row style={{ marginTop: 24 }}>
+      <Row gutter={[16, 16]}>
         <Col span={24}>
           <WorkloadReport />
         </Col>

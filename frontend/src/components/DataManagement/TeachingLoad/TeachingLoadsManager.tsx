@@ -1,4 +1,4 @@
-import { useEffect, useState, type FC } from "react";
+import { useEffect, useState, type FC, useMemo } from "react";
 import {
   Table,
   Button,
@@ -6,8 +6,9 @@ import {
   Popconfirm,
   message,
   Select,
-  Row,
-  Col,
+  Grid,
+  Flex,
+  Card,
 } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 
@@ -21,10 +22,13 @@ import {
   getTeachers,
 } from "../../../api";
 import { useApi } from "../../../hooks";
+import type { ColumnsType } from "antd/es/table";
 
 const { Option } = Select;
+const { useBreakpoint } = Grid;
 
 export const TeachingLoadsManager: FC = () => {
+  const screens = useBreakpoint();
   const {
     data: loadsRaw,
     loading,
@@ -64,49 +68,52 @@ export const TeachingLoadsManager: FC = () => {
         setDictsLoaded(true);
       } catch (error) {
         message.error("Ошибка загрузки справочников");
-        throw error;
+        console.error(error);
       }
     };
     fetchDicts();
   }, []);
 
-  // Сопоставление данных
-  const loads = (loadsRaw || []).map((load: any) => {
-    let discipline = load.discipline;
-    let group = load.group;
-    let teacher = load.teacher;
+  // Сопоставление и фильтрация данных
+  const loads = useMemo(() => {
+    return (loadsRaw || []).map((load: any) => {
+      let discipline = load.discipline;
+      let group = load.group;
+      let teacher = load.teacher;
 
-    if (typeof discipline === "string" || typeof discipline === "number") {
-      discipline = disciplines.find((d) => d.id === load.discipline) || {};
-    }
-    if (typeof group === "string" || typeof group === "number") {
-      group = groups.find((g) => g.id === load.group) || {};
-    }
-    if (typeof teacher === "string" || typeof teacher === "number") {
-      teacher = teachers.find((t) => t.id === load.teacher) || {};
-    }
+      if (typeof discipline === "string" || typeof discipline === "number") {
+        discipline = disciplines.find((d) => d.id === load.discipline) || {};
+      }
+      if (typeof group === "string" || typeof group === "number") {
+        group = groups.find((g) => g.id === load.group) || {};
+      }
+      if (typeof teacher === "string" || typeof teacher === "number") {
+        teacher = teachers.find((t) => t.id === load.teacher) || {};
+      }
 
-    return {
-      ...load,
-      discipline,
-      group,
-      teacher,
-    };
-  });
+      return {
+        ...load,
+        discipline,
+        group,
+        teacher,
+      };
+    });
+  }, [loadsRaw, disciplines, groups, teachers]);
 
-  // Фильтрация
-  const filteredLoads = loads.filter((load) => {
-    const matchesDiscipline =
-      !searchDiscipline ||
-      (load.discipline && String(load.discipline.id) === searchDiscipline);
-    const matchesGroup =
-      !searchGroup || (load.group && String(load.group.id) === searchGroup);
-    const matchesTeacher =
-      !searchTeacher ||
-      (load.teacher && String(load.teacher.id) === searchTeacher);
+  const filteredLoads = useMemo(() => {
+    return loads.filter((load) => {
+      const matchesDiscipline =
+        !searchDiscipline ||
+        (load.discipline && String(load.discipline.id) === searchDiscipline);
+      const matchesGroup =
+        !searchGroup || (load.group && String(load.group.id) === searchGroup);
+      const matchesTeacher =
+        !searchTeacher ||
+        (load.teacher && String(load.teacher.id) === searchTeacher);
 
-    return matchesDiscipline && matchesGroup && matchesTeacher;
-  });
+      return matchesDiscipline && matchesGroup && matchesTeacher;
+    });
+  }, [loads, searchDiscipline, searchGroup, searchTeacher]);
 
   const handleDelete = async (id: string) => {
     try {
@@ -115,20 +122,22 @@ export const TeachingLoadsManager: FC = () => {
       refresh({});
     } catch (error) {
       message.error("Ошибка при удалении нагрузки");
-      throw error;
+      console.error(error);
     }
   };
 
-  const columns = [
+  const columns: ColumnsType<TeachingLoad> = [
     {
       title: "Дисциплина",
       dataIndex: ["discipline", "name"],
       key: "discipline",
+      responsive: ["md"],
     },
     {
       title: "Группа",
       dataIndex: ["group", "name"],
       key: "group",
+      responsive: ["sm"],
     },
     {
       title: "Преподаватель",
@@ -136,34 +145,41 @@ export const TeachingLoadsManager: FC = () => {
       key: "teacher",
     },
     {
-      title: "Часы (1 сем.)",
+      title: screens.md ? "Часы (1 сем.)" : "1 сем.",
       dataIndex: "semester1_hours",
       key: "semester1",
       render: (hours: number) => hours || "—",
+      responsive: ["sm"],
     },
     {
-      title: "Часы (2 сем.)",
+      title: screens.md ? "Часы (2 сем.)" : "2 сем.",
       dataIndex: "semester2_hours",
       key: "semester2",
       render: (hours: number) => hours || "—",
+      responsive: ["sm"],
     },
     {
       title: "Действия",
       key: "actions",
-      render: (_: any, record: TeachingLoad) => (
-        <Space>
+      width: 110,
+      fixed: screens.xs ? "right" : undefined,
+      render: (_, record: TeachingLoad) => (
+        <Space size="small">
           <Button
             icon={<EditOutlined />}
             onClick={() => {
               setCurrentLoad(record);
               setModalOpen(true);
             }}
+            size="small"
           />
           <Popconfirm
             title="Удалить нагрузку?"
             onConfirm={() => handleDelete(record.id)}
+            okText="Удалить"
+            cancelText="Отмена"
           >
-            <Button icon={<DeleteOutlined />} danger />
+            <Button icon={<DeleteOutlined />} danger size="small" />
           </Popconfirm>
         </Space>
       ),
@@ -172,70 +188,77 @@ export const TeachingLoadsManager: FC = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: 16 }}>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => {
-            setCurrentLoad(null);
-            setModalOpen(true);
-          }}
-        >
-          Добавить нагрузку
-        </Button>
-      </div>
+      <Flex vertical gap={16} style={{ marginBottom: 16 }}>
+        <Card size="small">
+          <Flex justify="space-between" align="center" wrap="wrap" gap={16}>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setCurrentLoad(null);
+                setModalOpen(true);
+              }}
+              size={screens.xs ? "small" : "middle"}
+            >
+              {screens.xs ? "Добавить" : "Добавить нагрузку"}
+            </Button>
 
-      {/* Фильтры поиска */}
-      <Row gutter={16} style={{ marginBottom: 16 }}>
-        <Col xs={24} sm={12} md={8}>
-          <Select
-            placeholder="Дисциплина"
-            value={searchDiscipline}
-            onChange={setSearchDiscipline}
-            allowClear
-            style={{ width: "100%" }}
-            loading={!dictsLoaded}
-          >
-            {disciplines.map((disc) => (
-              <Option key={disc.id} value={String(disc.id)}>
-                {disc.name}
-              </Option>
-            ))}
-          </Select>
-        </Col>
-        <Col xs={24} sm={12} md={8}>
-          <Select
-            placeholder="Группа"
-            value={searchGroup}
-            onChange={setSearchGroup}
-            allowClear
-            style={{ width: "100%" }}
-            loading={!dictsLoaded}
-          >
-            {groups.map((group) => (
-              <Option key={group.id} value={String(group.id)}>
-                {group.name}
-              </Option>
-            ))}
-          </Select>
-        </Col>
-        <Col xs={24} sm={12} md={8}>
-          <Select
-            placeholder="Преподаватель"
-            value={searchTeacher}
-            onChange={setSearchTeacher}
-            allowClear
-            style={{ width: "100%" }}
-            loading={!dictsLoaded}
-          >
-            {teachers.map((teacher) => (
-              <Option key={teacher.id} value={String(teacher.id)}>
-                {teacher.short_name}
-              </Option>
-            ))}
-          </Select>
-        </Col>
-      </Row>
+            <Flex
+              gap={16}
+              wrap="wrap"
+              style={{ flex: 1, minWidth: screens.xs ? "100%" : 300 }}
+            >
+              <Select
+                placeholder="Дисциплина"
+                value={searchDiscipline}
+                onChange={setSearchDiscipline}
+                allowClear
+                style={{ width: "100%", minWidth: 120 }}
+                loading={!dictsLoaded}
+                size={screens.xs ? "small" : "middle"}
+              >
+                {disciplines.map((disc) => (
+                  <Option key={disc.id} value={String(disc.id)}>
+                    {disc.name}
+                  </Option>
+                ))}
+              </Select>
+
+              <Select
+                placeholder="Группа"
+                value={searchGroup}
+                onChange={setSearchGroup}
+                allowClear
+                style={{ width: "100%", minWidth: 120 }}
+                loading={!dictsLoaded}
+                size={screens.xs ? "small" : "middle"}
+              >
+                {groups.map((group) => (
+                  <Option key={group.id} value={String(group.id)}>
+                    {group.name}
+                  </Option>
+                ))}
+              </Select>
+
+              <Select
+                placeholder="Преподаватель"
+                value={searchTeacher}
+                onChange={setSearchTeacher}
+                allowClear
+                style={{ width: "100%", minWidth: 140 }}
+                loading={!dictsLoaded}
+                size={screens.xs ? "small" : "middle"}
+              >
+                {teachers.map((teacher) => (
+                  <Option key={teacher.id} value={String(teacher.id)}>
+                    {teacher.short_name}
+                  </Option>
+                ))}
+              </Select>
+            </Flex>
+          </Flex>
+        </Card>
+      </Flex>
 
       <Table
         columns={columns}
@@ -243,6 +266,13 @@ export const TeachingLoadsManager: FC = () => {
         rowKey="id"
         loading={loading || !dictsLoaded}
         scroll={{ x: true }}
+        size={screens.xs ? "small" : "middle"}
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+          responsive: true,
+          size: screens.xs ? "small" : "default",
+        }}
       />
 
       <TeachingLoadForm

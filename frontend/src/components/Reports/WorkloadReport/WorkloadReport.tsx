@@ -8,7 +8,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { Card, Spin, Alert, Tabs } from "antd";
+import { Card, Spin, Alert, Tabs, Grid, Typography } from "antd";
 
 import { useApi } from "../../../hooks";
 import { getTeachingLoads, getTeachers } from "../../../api";
@@ -16,6 +16,8 @@ import { type TeachingLoad, type Teacher } from "../../../types";
 import { formatTeacherName } from "../../../utils";
 
 const { TabPane } = Tabs;
+const { useBreakpoint } = Grid;
+const { Text } = Typography;
 
 interface TeacherWorkload {
   teacher: Teacher;
@@ -35,6 +37,7 @@ interface TeachersWorkloadReportProps {
 export const WorkloadReport: FC<TeachersWorkloadReportProps> = ({
   teacherId,
 }) => {
+  const screens = useBreakpoint();
   const {
     data: teachingLoadsData,
     error: teachingLoadsError,
@@ -121,32 +124,65 @@ export const WorkloadReport: FC<TeachersWorkloadReportProps> = ({
   const error = teachingLoadsError || teachersError;
 
   const renderChart = (dataKeys: string[]) => (
-    <ResponsiveContainer width="100%" height={400}>
-      <BarChart data={chartData}>
-        <XAxis
-          dataKey="teacher"
-          angle={-45}
-          textAnchor="end"
-          height={70}
-          tickFormatter={(teacher: Teacher) => formatTeacherName(teacher)}
-        />
-        <YAxis />
+    <ResponsiveContainer width="100%" height={screens.xs ? 300 : 400}>
+      <BarChart
+        data={chartData}
+        margin={{
+          top: 20,
+          right: screens.xs ? 0 : 30,
+          left: screens.xs ? 0 : 20,
+          bottom: screens.xs ? 40 : 70,
+        }}
+        layout={screens.xs ? "vertical" : "horizontal"}
+      >
+        {screens.xs ? (
+          <YAxis
+            type="category"
+            dataKey="teacher"
+            width={100}
+            tickFormatter={(teacher: Teacher) =>
+              formatTeacherName(teacher)
+                .split(" ")
+                .map((part, i) => (i === 0 ? part : part.charAt(0) + "."))
+                .join(" ")
+            }
+            tick={{ fontSize: 12 }}
+          />
+        ) : (
+          <XAxis
+            type="category"
+            dataKey="teacher"
+            angle={-45}
+            textAnchor="end"
+            height={70}
+            tickFormatter={(teacher: Teacher) => formatTeacherName(teacher)}
+            tick={{ fontSize: 12 }}
+          />
+        )}
+        {screens.xs ? <XAxis type="number" /> : <YAxis type="number" />}
         <Tooltip
           formatter={(value: number) => [`${value} часов`, ""]}
           labelFormatter={(label) => {
             const teacher = chartData.find(
               (t) => formatTeacherName(t.teacher) === label
             )?.teacher;
-            return teacher ?? label;
+            return teacher ? formatTeacherName(teacher) : label;
           }}
         />
-        <Legend />
+        <Legend
+          wrapperStyle={{
+            paddingTop: screens.xs ? "20px" : "0",
+            overflow: "scroll",
+            height: screens.xs ? "100px" : "auto",
+          }}
+        />
         {dataKeys.map((key) => (
           <Bar
             key={key}
             dataKey={key}
             fill={getBarColor(key)}
             name={getBarName(key)}
+            barSize={screens.xs ? 15 : 30}
           />
         ))}
       </BarChart>
@@ -166,12 +202,27 @@ export const WorkloadReport: FC<TeachersWorkloadReportProps> = ({
   }
 
   return (
-    <Card title={`Нагрузка преподавателей${teacherId ? "" : " (все)"}`}>
-      <Tabs defaultActiveKey="semesters">
-        <TabPane tab="По семестрам" key="semesters">
+    <Card
+      title={
+        <Text
+          ellipsis={{
+            tooltip: `Нагрузка преподавателей${teacherId ? "" : " (все)"}`,
+          }}
+        >
+          Нагрузка преподавателей{teacherId ? "" : " (все)"}
+        </Text>
+      }
+      bodyStyle={{ padding: screens.xs ? "8px" : "16px" }}
+    >
+      <Tabs
+        defaultActiveKey="semesters"
+        size={screens.xs ? "small" : "middle"}
+        tabPosition={screens.xs ? "top" : "top"}
+      >
+        <TabPane tab="Семестры" key="semesters">
           {renderChart(["semester1", "semester2"])}
         </TabPane>
-        <TabPane tab="Доп. нагрузки" key="additional">
+        <TabPane tab="Доп.нагрузки" key="additional">
           {renderChart([
             "exams",
             "consultations",
@@ -179,7 +230,7 @@ export const WorkloadReport: FC<TeachersWorkloadReportProps> = ({
             "diplomaWorks",
           ])}
         </TabPane>
-        <TabPane tab="Общая нагрузка" key="total">
+        <TabPane tab="Общая" key="total">
           {renderChart(["total"])}
         </TabPane>
       </Tabs>
@@ -203,10 +254,10 @@ const getBarColor = (key: string) => {
 
 const getBarName = (key: string) => {
   const names: Record<string, string> = {
-    semester1: "1 семестр",
-    semester2: "2 семестр",
+    semester1: "1 сем.",
+    semester2: "2 сем.",
     exams: "Экзамены",
-    consultations: "Консультации",
+    consultations: "Консульт.",
     courseWorks: "Курсовые",
     diplomaWorks: "Дипломные",
     total: "Всего",

@@ -1,5 +1,14 @@
-import { useEffect, useState, type FC } from "react";
-import { Table, Button, Space, Popconfirm, message, Select } from "antd";
+import { useEffect, useState, type FC, useMemo } from "react";
+import {
+  Table,
+  Button,
+  Space,
+  Popconfirm,
+  message,
+  Select,
+  Flex,
+  Grid,
+} from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 
@@ -9,8 +18,20 @@ import { getTimeSlots, deleteTimeSlot } from "../../../api";
 import { useApi } from "../../../hooks";
 
 const { Option } = Select;
+const { useBreakpoint } = Grid;
+
+const daysOfWeek = [
+  "Понедельник",
+  "Вторник",
+  "Среда",
+  "Четверг",
+  "Пятница",
+  "Суббота",
+  "Воскресенье",
+];
 
 export const TimeSlotsManager: FC = () => {
+  const screens = useBreakpoint();
   const { data: timeSlots, loading, request: refresh } = useApi(getTimeSlots);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentSlot, setCurrentSlot] = useState<TimeSlot | null>(null);
@@ -20,10 +41,13 @@ export const TimeSlotsManager: FC = () => {
     refresh({});
   }, []);
 
-  const filteredSlots =
-    timeSlots?.filter(
-      (slot: TimeSlot) => !searchDay || slot.day_of_week === searchDay
-    ) || [];
+  const filteredSlots = useMemo(() => {
+    return (
+      timeSlots?.filter(
+        (slot: TimeSlot) => !searchDay || slot.day_of_week === searchDay
+      ) || []
+    );
+  }, [timeSlots, searchDay]);
 
   const handleDelete = async (id: string) => {
     try {
@@ -32,26 +56,19 @@ export const TimeSlotsManager: FC = () => {
       refresh({});
     } catch (error) {
       message.error("Ошибка при удалении временного слота");
-      throw error;
+      console.error(error);
     }
   };
 
   const columns = [
     {
-      title: "День недели",
+      title: "День",
       dataIndex: "day_of_week",
       key: "day",
       render: (day: number) => {
-        const days = [
-          "Понедельник",
-          "Вторник",
-          "Среда",
-          "Четверг",
-          "Пятница",
-          "Суббота",
-          "Воскресенье",
-        ];
-        return days[day - 1] || `День ${day}`;
+        return screens.sm
+          ? daysOfWeek[day - 1] || `День ${day}`
+          : daysOfWeek[day - 1]?.substring(0, 2) || day;
       },
     },
     {
@@ -69,20 +86,24 @@ export const TimeSlotsManager: FC = () => {
     {
       title: "Действия",
       key: "actions",
-      render: (_: any, record: TimeSlot) => (
-        <Space>
+      width: screens.xs ? 100 : undefined,
+      render: (_: unknown, record: TimeSlot) => (
+        <Space size="small">
           <Button
             icon={<EditOutlined />}
             onClick={() => {
               setCurrentSlot(record);
               setModalOpen(true);
             }}
+            size="small"
           />
           <Popconfirm
-            title="Удалить временной слот?"
+            title="Удалить слот?"
             onConfirm={() => handleDelete(record.id)}
+            okText="Удалить"
+            cancelText="Отмена"
           >
-            <Button icon={<DeleteOutlined />} danger />
+            <Button icon={<DeleteOutlined />} danger size="small" />
           </Popconfirm>
         </Space>
       ),
@@ -91,12 +112,12 @@ export const TimeSlotsManager: FC = () => {
 
   return (
     <div>
-      <div
-        style={{
-          marginBottom: 16,
-          display: "flex",
-          justifyContent: "space-between",
-        }}
+      <Flex
+        justify="space-between"
+        align="center"
+        gap={16}
+        wrap="wrap"
+        style={{ marginBottom: 16 }}
       >
         <Button
           type="primary"
@@ -105,31 +126,40 @@ export const TimeSlotsManager: FC = () => {
             setCurrentSlot(null);
             setModalOpen(true);
           }}
+          size={screens.xs ? "small" : "middle"}
         >
-          Добавить временной слот
+          {screens.xs ? "Добавить" : "Добавить слот"}
         </Button>
 
         <Select
-          placeholder="Фильтр по дню недели"
+          placeholder={screens.xs ? "День" : "Фильтр по дню недели"}
           value={searchDay}
           onChange={setSearchDay}
           allowClear
-          style={{ width: 200 }}
+          style={{ width: screens.xs ? 120 : 200 }}
+          size={screens.xs ? "small" : "middle"}
         >
-          <Option value={1}>Понедельник</Option>
-          <Option value={2}>Вторник</Option>
-          <Option value={3}>Среда</Option>
-          <Option value={4}>Четверг</Option>
-          <Option value={5}>Пятница</Option>
-          <Option value={6}>Суббота</Option>
+          {daysOfWeek.slice(0, 6).map((day, index) => (
+            <Option key={index + 1} value={index + 1}>
+              {screens.xs ? day.substring(0, 2) : day}
+            </Option>
+          ))}
         </Select>
-      </div>
+      </Flex>
 
       <Table
         columns={columns}
         dataSource={filteredSlots}
         rowKey="id"
         loading={loading}
+        scroll={{ x: true }}
+        size={screens.xs ? "small" : "middle"}
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+          responsive: true,
+          size: screens.xs ? "small" : "default",
+        }}
       />
 
       <TimeSlotForm
